@@ -45,14 +45,16 @@ go get github.com/labacacia/nps/impl/go@v1.0.0-alpha.1
 
 ## Packages
 
-| Import path | Description |
-|-------------|-------------|
-| `.../impl/go/core` | Frame header, codec (Tier-1 JSON / Tier-2 MsgPack), registry, anchor cache, errors |
-| `.../impl/go/ncp`  | NCP frames: `AnchorFrame`, `DiffFrame`, `StreamFrame`, `CapsFrame`, `ErrorFrame`, `HelloFrame` |
-| `.../impl/go/nwp`  | NWP frames: `QueryFrame`, `ActionFrame`; HTTP `Client` |
-| `.../impl/go/nip`  | NIP frames: `IdentFrame`, `TrustFrame`, `RevokeFrame`; Ed25519 `Identity` |
-| `.../impl/go/ndp`  | NDP frames: `AnnounceFrame`, `ResolveFrame`, `GraphFrame`; registry & validator |
-| `.../impl/go/nop`  | NOP frames: `TaskFrame`, `DelegateFrame`, `SyncFrame`, `AlignStreamFrame`; DAG models and client |
+| Import path | Description | Reference |
+|-------------|-------------|-----------|
+| `.../impl/go/core` | Frame header, codec (Tier-1 JSON / Tier-2 MsgPack), registry, anchor cache, errors | [`doc/nps-go.core.md`](./doc/nps-go.core.md) |
+| `.../impl/go/ncp`  | NCP frames: `AnchorFrame`, `DiffFrame`, `StreamFrame`, `CapsFrame`, `ErrorFrame` | [`doc/nps-go.ncp.md`](./doc/nps-go.ncp.md) |
+| `.../impl/go/nwp`  | NWP frames: `QueryFrame`, `ActionFrame`; HTTP `NwpClient` | [`doc/nps-go.nwp.md`](./doc/nps-go.nwp.md) |
+| `.../impl/go/nip`  | NIP frames: `IdentFrame`, `TrustFrame`, `RevokeFrame`; Ed25519 `NipIdentity` | [`doc/nps-go.nip.md`](./doc/nps-go.nip.md) |
+| `.../impl/go/ndp`  | NDP frames: `AnnounceFrame`, `ResolveFrame`, `GraphFrame`; `InMemoryNdpRegistry` + `NdpAnnounceValidator` | [`doc/nps-go.ndp.md`](./doc/nps-go.ndp.md) |
+| `.../impl/go/nop`  | NOP frames: `TaskFrame`, `DelegateFrame`, `SyncFrame`, `AlignStreamFrame`; `BackoffStrategy` + `NopTaskStatus` + `NopClient` | [`doc/nps-go.nop.md`](./doc/nps-go.nop.md) |
+
+Full API reference lives under [`doc/`](./doc/) — start with [`doc/overview.md`](./doc/overview.md). For a narrative walkthrough see [`doc/sdk-usage.md`](./doc/sdk-usage.md) / [`doc/sdk-usage.cn.md`](./doc/sdk-usage.cn.md).
 
 ## Quick Start
 
