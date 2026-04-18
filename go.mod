@@ -1,4 +1,4 @@
-module github.com/labacacia/nps/impl/go
+module github.com/labacacia/NPS-sdk-go
 
 go 1.25.0
 

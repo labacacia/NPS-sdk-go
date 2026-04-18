@@ -5,7 +5,7 @@ package ndp
 import (
 	"sort"
 
-	"github.com/labacacia/nps/impl/go/core"
+	"github.com/labacacia/NPS-sdk-go/core"
 )
 
 func str(d core.FrameDict, k string) string {

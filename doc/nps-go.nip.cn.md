@@ -1,6 +1,6 @@
 [English Version](./nps-go.nip.md) | 中文版
 
-# `github.com/labacacia/nps/impl/go/nip` — 参考
+# `github.com/labacacia/NPS-sdk-go/nip` — 参考
 
 > 规范：[NPS-3 NIP v0.2](https://github.com/labacacia/NPS-Release/blob/main/spec/NPS-3-NIP.md)
 
@@ -158,8 +158,8 @@ payload —— 无空白、按键序。这与 .NET / Python / Java / TS / Rust S
 
 ```go
 import (
-    "github.com/labacacia/nps/impl/go/core"
-    "github.com/labacacia/nps/impl/go/nip"
+    "github.com/labacacia/NPS-sdk-go/core"
+    "github.com/labacacia/NPS-sdk-go/nip"
 )
 
 id, err := nip.Generate()

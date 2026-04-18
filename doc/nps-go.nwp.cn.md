@@ -1,6 +1,6 @@
 [English Version](./nps-go.nwp.md) | 中文版
 
-# `github.com/labacacia/nps/impl/go/nwp` — 参考
+# `github.com/labacacia/NPS-sdk-go/nwp` — 参考
 
 > 规范：[NPS-2 NWP v0.4](https://github.com/labacacia/NPS-Release/blob/main/spec/NPS-2-NWP.md)
 
@@ -170,8 +170,8 @@ type InvokeResult struct {
 ```go
 import (
     "context"
-    "github.com/labacacia/nps/impl/go/nwp"
-    "github.com/labacacia/nps/impl/go/ncp"
+    "github.com/labacacia/NPS-sdk-go/nwp"
+    "github.com/labacacia/NPS-sdk-go/ncp"
 )
 
 client := nwp.NewNwpClient("http://node.example.com:17433")

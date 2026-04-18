@@ -1,6 +1,6 @@
 [English Version](./nps-go.ncp.md) | 中文版
 
-# `github.com/labacacia/nps/impl/go/ncp` — 参考
+# `github.com/labacacia/NPS-sdk-go/ncp` — 参考
 
 > 规范：[NPS-1 NCP v0.4](https://github.com/labacacia/NPS-Release/blob/main/spec/NPS-1-NCP.md)
 
@@ -133,8 +133,8 @@ type ErrorFrame struct {
 
 ```go
 import (
-    "github.com/labacacia/nps/impl/go/core"
-    "github.com/labacacia/nps/impl/go/ncp"
+    "github.com/labacacia/NPS-sdk-go/core"
+    "github.com/labacacia/NPS-sdk-go/ncp"
 )
 
 codec := core.NewNpsFrameCodec(core.CreateDefaultRegistry())

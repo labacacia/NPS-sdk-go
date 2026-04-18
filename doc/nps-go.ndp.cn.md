@@ -1,6 +1,6 @@
 [English Version](./nps-go.ndp.md) | 中文版
 
-# `github.com/labacacia/nps/impl/go/ndp` — 参考
+# `github.com/labacacia/NPS-sdk-go/ndp` — 参考
 
 > 规范：[NPS-4 NDP v0.2](https://github.com/labacacia/NPS-Release/blob/main/spec/NPS-4-NDP.md)
 
@@ -206,8 +206,8 @@ type NdpAnnounceResult struct {
 ```go
 import (
     "time"
-    "github.com/labacacia/nps/impl/go/ndp"
-    "github.com/labacacia/nps/impl/go/nip"
+    "github.com/labacacia/NPS-sdk-go/ndp"
+    "github.com/labacacia/NPS-sdk-go/nip"
 )
 
 id, _ := nip.Generate()

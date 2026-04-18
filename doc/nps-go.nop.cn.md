@@ -1,6 +1,6 @@
 [English Version](./nps-go.nop.md) | 中文版
 
-# `github.com/labacacia/nps/impl/go/nop` — 参考
+# `github.com/labacacia/NPS-sdk-go/nop` — 参考
 
 > 规范：[NPS-5 NOP v0.3](https://github.com/labacacia/NPS-Release/blob/main/spec/NPS-5-NOP.md)
 
@@ -252,7 +252,7 @@ type WaitOptions struct {
 import (
     "context"
     "time"
-    "github.com/labacacia/nps/impl/go/nop"
+    "github.com/labacacia/NPS-sdk-go/nop"
 )
 
 dag := map[string]any{

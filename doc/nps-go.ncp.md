@@ -1,6 +1,6 @@
 English | [中文版](./nps-go.ncp.cn.md)
 
-# `github.com/labacacia/nps/impl/go/ncp` — Reference
+# `github.com/labacacia/NPS-sdk-go/ncp` — Reference
 
 > Spec: [NPS-1 NCP v0.4](https://github.com/labacacia/NPS-Release/blob/main/spec/NPS-1-NCP.md)
 
@@ -136,8 +136,8 @@ for the namespace.
 
 ```go
 import (
-    "github.com/labacacia/nps/impl/go/core"
-    "github.com/labacacia/nps/impl/go/ncp"
+    "github.com/labacacia/NPS-sdk-go/core"
+    "github.com/labacacia/NPS-sdk-go/ncp"
 )
 
 codec := core.NewNpsFrameCodec(core.CreateDefaultRegistry())
