@@ -1,6 +1,6 @@
 English | [中文版](./nps-go.nop.cn.md)
 
-# `github.com/labacacia/nps/impl/go/nop` — Reference
+# `github.com/labacacia/NPS-sdk-go/nop` — Reference
 
 > Spec: [NPS-5 NOP v0.3](https://github.com/labacacia/NPS-Release/blob/main/spec/NPS-5-NOP.md)
 
@@ -261,7 +261,7 @@ status plus an error like `"NOP Wait: exceeded N poll attempts …"` when
 import (
     "context"
     "time"
-    "github.com/labacacia/nps/impl/go/nop"
+    "github.com/labacacia/NPS-sdk-go/nop"
 )
 
 dag := map[string]any{

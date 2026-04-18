@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/labacacia/nps/impl/go/core"
-	"github.com/labacacia/nps/impl/go/nip"
+	"github.com/labacacia/NPS-sdk-go/core"
+	"github.com/labacacia/NPS-sdk-go/nip"
 )
 
 // ── NipIdentity ───────────────────────────────────────────────────────────────

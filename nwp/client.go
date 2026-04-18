@@ -11,8 +11,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/labacacia/nps/impl/go/core"
-	"github.com/labacacia/nps/impl/go/ncp"
+	"github.com/labacacia/NPS-sdk-go/core"
+	"github.com/labacacia/NPS-sdk-go/ncp"
 )
 
 const contentType = "application/x-nps-frame"

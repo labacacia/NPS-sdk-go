@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package nip
 
-import "github.com/labacacia/nps/impl/go/core"
+import "github.com/labacacia/NPS-sdk-go/core"
 
 func str(d core.FrameDict, k string) string {
 	if v, ok := d[k].(string); ok { return v }

@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/labacacia/nps/impl/go/nip"
-	"github.com/labacacia/nps/impl/go/ndp"
+	"github.com/labacacia/NPS-sdk-go/nip"
+	"github.com/labacacia/NPS-sdk-go/ndp"
 )
 
 // ── AnnounceFrame ─────────────────────────────────────────────────────────────

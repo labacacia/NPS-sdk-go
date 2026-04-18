@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/labacacia/nps/impl/go/nip"
+	"github.com/labacacia/NPS-sdk-go/nip"
 )
 
 // NdpAnnounceResult holds the outcome of an announce validation.

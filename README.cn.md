@@ -2,13 +2,13 @@
 
 # NPS Go SDK
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/labacacia/nps/impl/go.svg)](https://pkg.go.dev/github.com/labacacia/nps/impl/go)
+[![Go Reference](https://pkg.go.dev/badge/github.com/labacacia/NPS-sdk-go.svg)](https://pkg.go.dev/github.com/labacacia/NPS-sdk-go)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](./LICENSE)
 [![Go](https://img.shields.io/badge/Go-1.23%2B-00ADD8)](https://go.dev/)
 
 **Neural Protocol Suite (NPS)** 的 Go 客户端库 —— 专为 AI Agent 与神经模型设计的完整互联网协议族。
 
-模块路径：`github.com/labacacia/nps/impl/go`
+模块路径：`github.com/labacacia/NPS-sdk-go`
 
 ---
 
@@ -42,7 +42,7 @@
 ## 安装
 
 ```bash
-go get github.com/labacacia/nps/impl/go@v1.0.0-alpha.1
+go get github.com/labacacia/NPS-sdk-go@v1.0.0-alpha.1
 ```
 
 ## 包
@@ -64,8 +64,8 @@ go get github.com/labacacia/nps/impl/go@v1.0.0-alpha.1
 
 ```go
 import (
-    "github.com/labacacia/nps/impl/go/core"
-    "github.com/labacacia/nps/impl/go/ncp"
+    "github.com/labacacia/NPS-sdk-go/core"
+    "github.com/labacacia/NPS-sdk-go/ncp"
 )
 
 registry := core.NewDefaultRegistry()
@@ -88,7 +88,7 @@ decoded, _ := codec.Decode(wire)
 ### 查询 Memory Node（NWP）
 
 ```go
-import "github.com/labacacia/nps/impl/go/nwp"
+import "github.com/labacacia/NPS-sdk-go/nwp"
 
 client := nwp.NewClient("http://node.example.com:17433")
 caps, err := client.Query(ctx, &nwp.QueryFrame{
@@ -100,7 +100,7 @@ caps, err := client.Query(ctx, &nwp.QueryFrame{
 ### Ed25519 身份（NIP）
 
 ```go
-import "github.com/labacacia/nps/impl/go/nip"
+import "github.com/labacacia/NPS-sdk-go/nip"
 
 id, _ := nip.GenerateIdentity()
 
@@ -116,7 +116,7 @@ ok, _     := loaded.Verify(map[string]any{"nid": "urn:nps:node:example.com:data"
 ### 公告与解析（NDP）
 
 ```go
-import "github.com/labacacia/nps/impl/go/ndp"
+import "github.com/labacacia/NPS-sdk-go/ndp"
 
 registry  := ndp.NewInMemoryRegistry()
 validator := ndp.NewAnnounceValidator()
@@ -129,7 +129,7 @@ resolved, _ := registry.Resolve("nwp://example.com/data")
 ### 提交 NOP 任务
 
 ```go
-import "github.com/labacacia/nps/impl/go/nop"
+import "github.com/labacacia/NPS-sdk-go/nop"
 
 client  := nop.NewClient("http://orchestrator.example.com:17433")
 taskID, _ := client.Submit(ctx, &nop.TaskFrame{
