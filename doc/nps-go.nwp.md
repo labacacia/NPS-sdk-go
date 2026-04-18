@@ -1,6 +1,6 @@
 English | [中文版](./nps-go.nwp.cn.md)
 
-# `github.com/labacacia/nps/impl/go/nwp` — Reference
+# `github.com/labacacia/NPS-sdk-go/nwp` — Reference
 
 > Spec: [NPS-2 NWP v0.4](https://github.com/labacacia/NPS-Release/blob/main/spec/NPS-2-NWP.md)
 
@@ -173,8 +173,8 @@ frame from `Frame`, call the relevant `XxxFrameFromDict(*r.Frame)`.
 ```go
 import (
     "context"
-    "github.com/labacacia/nps/impl/go/nwp"
-    "github.com/labacacia/nps/impl/go/ncp"
+    "github.com/labacacia/NPS-sdk-go/nwp"
+    "github.com/labacacia/NPS-sdk-go/ncp"
 )
 
 client := nwp.NewNwpClient("http://node.example.com:17433")

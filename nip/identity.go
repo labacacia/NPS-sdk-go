@@ -18,7 +18,7 @@ import (
 
 	"golang.org/x/crypto/pbkdf2"
 
-	"github.com/labacacia/nps/impl/go/core"
+	"github.com/labacacia/NPS-sdk-go/core"
 )
 
 const (

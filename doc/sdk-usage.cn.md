@@ -4,7 +4,7 @@
 
 > Copyright 2026 INNO LOTUS PTY LTD — 基于 Apache 2.0 授权
 
-**版本**: v1.0.0-alpha.1 | **模块**: `github.com/labacacia/nps/impl/go` | **Go**: 1.25+
+**版本**: v1.0.0-alpha.1 | **模块**: `github.com/labacacia/NPS-sdk-go` | **Go**: 1.25+
 
 ---
 
@@ -21,7 +21,7 @@
 ## 安装
 
 ```bash
-go get github.com/labacacia/nps/impl/go
+go get github.com/labacacia/NPS-sdk-go
 ```
 
 **依赖项**
@@ -52,8 +52,8 @@ go get github.com/labacacia/nps/impl/go
 
 ```go
 import (
-    "github.com/labacacia/nps/impl/go/core"
-    "github.com/labacacia/nps/impl/go/ncp"
+    "github.com/labacacia/NPS-sdk-go/core"
+    "github.com/labacacia/NPS-sdk-go/ncp"
 )
 
 // 构建 AnchorFrame
@@ -84,7 +84,7 @@ fmt.Println(ft, decoded.AnchorID) // 0x01 anchor-001
 ```go
 import (
     "context"
-    "github.com/labacacia/nps/impl/go/nwp"
+    "github.com/labacacia/NPS-sdk-go/nwp"
 )
 
 client := nwp.NewNwpClient("http://localhost:17433")
@@ -128,8 +128,8 @@ fmt.Println(result.JSON)
 
 ```go
 import (
-    "github.com/labacacia/nps/impl/go/nip"
-    "github.com/labacacia/nps/impl/go/core"
+    "github.com/labacacia/NPS-sdk-go/nip"
+    "github.com/labacacia/NPS-sdk-go/core"
 )
 
 // 生成新的 Ed25519 身份标识
@@ -173,7 +173,7 @@ fmt.Println(ident.FrameType()) // 0x20
 
 ```go
 import (
-    "github.com/labacacia/nps/impl/go/ndp"
+    "github.com/labacacia/NPS-sdk-go/ndp"
 )
 
 // 带 TTL 淘汰的内存注册表
@@ -207,7 +207,7 @@ if err := validator.Validate(announce); err != nil {
 ```go
 import (
     "context"
-    "github.com/labacacia/nps/impl/go/nop"
+    "github.com/labacacia/NPS-sdk-go/nop"
 )
 
 client := nop.NewNopClient("http://localhost:17433")
@@ -325,7 +325,7 @@ go test ./...
 go test -v ./...
 
 # 运行指定包的测试
-go test github.com/labacacia/nps/impl/go/ncp -v
+go test github.com/labacacia/NPS-sdk-go/ncp -v
 
 # 开启竞态检测
 go test -race ./...

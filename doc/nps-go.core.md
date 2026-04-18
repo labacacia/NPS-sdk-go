@@ -1,6 +1,6 @@
 English | [中文版](./nps-go.core.cn.md)
 
-# `github.com/labacacia/nps/impl/go/core` — Reference
+# `github.com/labacacia/NPS-sdk-go/core` — Reference
 
 > Spec: [NPS-1 NCP v0.4](https://github.com/labacacia/NPS-Release/blob/main/spec/NPS-1-NCP.md)
 

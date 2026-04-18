@@ -4,7 +4,7 @@ English | [中文版](./sdk-usage.cn.md)
 
 > Copyright 2026 INNO LOTUS PTY LTD — Licensed under Apache 2.0
 
-**Version**: v1.0.0-alpha.1 | **Module**: `github.com/labacacia/nps/impl/go` | **Go**: 1.25+
+**Version**: v1.0.0-alpha.1 | **Module**: `github.com/labacacia/NPS-sdk-go` | **Go**: 1.25+
 
 ---
 
@@ -21,7 +21,7 @@ English | [中文版](./sdk-usage.cn.md)
 ## Installation
 
 ```bash
-go get github.com/labacacia/nps/impl/go
+go get github.com/labacacia/NPS-sdk-go
 ```
 
 **Dependencies**
@@ -52,8 +52,8 @@ go get github.com/labacacia/nps/impl/go
 
 ```go
 import (
-    "github.com/labacacia/nps/impl/go/core"
-    "github.com/labacacia/nps/impl/go/ncp"
+    "github.com/labacacia/NPS-sdk-go/core"
+    "github.com/labacacia/NPS-sdk-go/ncp"
 )
 
 // Build an AnchorFrame
@@ -84,7 +84,7 @@ fmt.Println(ft, decoded.AnchorID) // 0x01 anchor-001
 ```go
 import (
     "context"
-    "github.com/labacacia/nps/impl/go/nwp"
+    "github.com/labacacia/NPS-sdk-go/nwp"
 )
 
 client := nwp.NewNwpClient("http://localhost:17433")
@@ -128,8 +128,8 @@ fmt.Println(result.JSON)
 
 ```go
 import (
-    "github.com/labacacia/nps/impl/go/nip"
-    "github.com/labacacia/nps/impl/go/core"
+    "github.com/labacacia/NPS-sdk-go/nip"
+    "github.com/labacacia/NPS-sdk-go/core"
 )
 
 // Generate a new Ed25519 identity
@@ -173,7 +173,7 @@ fmt.Println(ident.FrameType()) // 0x20
 
 ```go
 import (
-    "github.com/labacacia/nps/impl/go/ndp"
+    "github.com/labacacia/NPS-sdk-go/ndp"
 )
 
 // In-memory registry with TTL eviction
@@ -207,7 +207,7 @@ if err := validator.Validate(announce); err != nil {
 ```go
 import (
     "context"
-    "github.com/labacacia/nps/impl/go/nop"
+    "github.com/labacacia/NPS-sdk-go/nop"
 )
 
 client := nop.NewNopClient("http://localhost:17433")
@@ -325,7 +325,7 @@ go test ./...
 go test -v ./...
 
 # Run tests for a specific package
-go test github.com/labacacia/nps/impl/go/ncp -v
+go test github.com/labacacia/NPS-sdk-go/ncp -v
 
 # Run with race detector
 go test -race ./...

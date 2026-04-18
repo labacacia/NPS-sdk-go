@@ -3,7 +3,7 @@
 package ncp
 
 import (
-	"github.com/labacacia/nps/impl/go/core"
+	"github.com/labacacia/NPS-sdk-go/core"
 )
 
 // ── helpers ───────────────────────────────────────────────────────────────────
