@@ -3,7 +3,7 @@ English | [中文版](./overview.cn.md)
 # NPS Go SDK — API Reference
 
 > Go client library for the Neural Protocol Suite. Module path:
-> `github.com/labacacia/nps/impl/go`, Go 1.23+ (recommended 1.25+).
+> `github.com/labacacia/NPS-sdk-go`, Go 1.23+ (recommended 1.25+).
 
 This directory is the package-and-function reference for the Go SDK.
 For a narrative walkthrough see [`sdk-usage.md`](./sdk-usage.md)
@@ -22,15 +22,15 @@ For a narrative walkthrough see [`sdk-usage.md`](./sdk-usage.md)
 | `/ndp`  | NDP frames + `InMemoryNdpRegistry` + `NdpAnnounceValidator` | [`nps-go.ndp.md`](./nps-go.ndp.md) |
 | `/nop`  | NOP frames + `BackoffStrategy` + `NopTaskStatus` + `NopClient` | [`nps-go.nop.md`](./nps-go.nop.md) |
 
-Module root is `github.com/labacacia/nps/impl/go`; every package above is
-imported as `"github.com/labacacia/nps/impl/go/{core,ncp,nwp,nip,ndp,nop}"`.
+Module root is `github.com/labacacia/NPS-sdk-go`; every package above is
+imported as `"github.com/labacacia/NPS-sdk-go/{core,ncp,nwp,nip,ndp,nop}"`.
 
 ---
 
 ## Install
 
 ```bash
-go get github.com/labacacia/nps/impl/go@v1.0.0-alpha.1
+go get github.com/labacacia/NPS-sdk-go@v1.0.0-alpha.1
 ```
 
 Runtime dependencies (resolved by `go mod tidy`):
@@ -45,8 +45,8 @@ Runtime dependencies (resolved by `go mod tidy`):
 
 ```go
 import (
-    "github.com/labacacia/nps/impl/go/core"
-    "github.com/labacacia/nps/impl/go/ncp"
+    "github.com/labacacia/NPS-sdk-go/core"
+    "github.com/labacacia/NPS-sdk-go/ncp"
 )
 
 codec := core.NewNpsFrameCodec(core.CreateFullRegistry())

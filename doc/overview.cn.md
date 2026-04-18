@@ -3,7 +3,7 @@
 # NPS Go SDK — API 参考
 
 > Neural Protocol Suite 的 Go 客户端库。模块路径：
-> `github.com/labacacia/nps/impl/go`，Go 1.23+（推荐 1.25+）。
+> `github.com/labacacia/NPS-sdk-go`，Go 1.23+（推荐 1.25+）。
 
 本目录是 Go SDK 的包与函数参考。叙事性教程参见
 [`sdk-usage.md`](./sdk-usage.md)（English）/
@@ -22,15 +22,15 @@
 | `/ndp`  | NDP 帧 + `InMemoryNdpRegistry` + `NdpAnnounceValidator` | [`nps-go.ndp.cn.md`](./nps-go.ndp.cn.md) |
 | `/nop`  | NOP 帧 + `BackoffStrategy` + `NopTaskStatus` + `NopClient` | [`nps-go.nop.cn.md`](./nps-go.nop.cn.md) |
 
-模块根是 `github.com/labacacia/nps/impl/go`，上述所有包以
-`"github.com/labacacia/nps/impl/go/{core,ncp,nwp,nip,ndp,nop}"` 方式引用。
+模块根是 `github.com/labacacia/NPS-sdk-go`，上述所有包以
+`"github.com/labacacia/NPS-sdk-go/{core,ncp,nwp,nip,ndp,nop}"` 方式引用。
 
 ---
 
 ## 安装
 
 ```bash
-go get github.com/labacacia/nps/impl/go@v1.0.0-alpha.1
+go get github.com/labacacia/NPS-sdk-go@v1.0.0-alpha.1
 ```
 
 运行时依赖（由 `go mod tidy` 解析）：
@@ -45,8 +45,8 @@ go get github.com/labacacia/nps/impl/go@v1.0.0-alpha.1
 
 ```go
 import (
-    "github.com/labacacia/nps/impl/go/core"
-    "github.com/labacacia/nps/impl/go/ncp"
+    "github.com/labacacia/NPS-sdk-go/core"
+    "github.com/labacacia/NPS-sdk-go/ncp"
 )
 
 codec := core.NewNpsFrameCodec(core.CreateFullRegistry())

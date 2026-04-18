@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/labacacia/nps/impl/go/nop"
+	"github.com/labacacia/NPS-sdk-go/nop"
 )
 
 // ── BackoffStrategy ───────────────────────────────────────────────────────────
