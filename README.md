@@ -1,3 +1,5 @@
+English | [中文版](./README.cn.md)
+
 # NPS Go SDK
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/labacacia/nps/impl/go.svg)](https://pkg.go.dev/github.com/labacacia/nps/impl/go)
