@@ -1,15 +1,14 @@
-English | [中文版](./nps-go.nop.cn.md)
+[English Version](./nps-go.nop.md) | 中文版
 
-# `github.com/labacacia/nps/impl/go/nop` — Reference
+# `github.com/labacacia/nps/impl/go/nop` — 参考
 
-> Spec: [NPS-5 NOP v0.3](https://github.com/labacacia/NPS-Release/blob/main/spec/NPS-5-NOP.md)
+> 规范：[NPS-5 NOP v0.3](https://github.com/labacacia/NPS-Release/blob/main/spec/NPS-5-NOP.md)
 
-Orchestration layer — DAG submission, fan-in barriers, streaming
-progress, async status polling.
+编排层 —— DAG 提交、fan-in 屏障、流式进度、异步状态轮询。
 
 ---
 
-## Table of contents
+## 目录
 
 - [`BackoffStrategy`](#backoffstrategy)
 - [`TaskState`](#taskstate)
@@ -33,19 +32,19 @@ const (
     BackoffExponential
 )
 
-// Package-level function — not a method.
+// 包级函数 —— 非方法。
 func ComputeDelayMs(strategy BackoffStrategy, baseMs, maxMs int64, attempt int) int64
 ```
 
-`ComputeDelayMs` (0-indexed `attempt`):
+`ComputeDelayMs`（`attempt` 从 0 起）：
 
-| Strategy             | Formula                     |
-|----------------------|-----------------------------|
-| `BackoffFixed`       | `baseMs`                    |
-| `BackoffLinear`      | `baseMs * (attempt + 1)`    |
-| `BackoffExponential` | `baseMs << attempt` (≡ `baseMs * 2^attempt`) |
+| 策略                  | 公式                          |
+|-----------------------|-------------------------------|
+| `BackoffFixed`       | `baseMs`                       |
+| `BackoffLinear`      | `baseMs * (attempt + 1)`       |
+| `BackoffExponential` | `baseMs << attempt`（≡ `baseMs * 2^attempt`）|
 
-Result is clamped at `maxMs`.
+结果以 `maxMs` 为上限。
 
 ---
 
@@ -62,22 +61,20 @@ const (
     TaskStateCancelled TaskState = "cancelled"
 )
 
-func TaskStateFromString(s string) (TaskState, error)   // errors on unknown
+func TaskStateFromString(s string) (TaskState, error)   // 未知时返回 error
 func (s TaskState) IsTerminal() bool                    // Completed | Failed | Cancelled
 ```
 
-> The Go SDK exposes only the five common states above. Orchestrator
-> responses carrying `"preflight"`, `"waiting_sync"` or `"skipped"` will
-> still decode via `NopTaskStatus.State()` but the returned `TaskState`
-> value will not match any of the declared constants. Use
-> `NopTaskStatus.String()` / the raw payload to inspect the original
-> string when needed.
+> Go SDK 仅暴露上述五种通用状态。携带 `"preflight"`、`"waiting_sync"` 或
+> `"skipped"` 的编排器响应仍可通过 `NopTaskStatus.State()` 解码，但返回
+> 的 `TaskState` 值不会匹配任何声明的常量。需要时使用
+> `NopTaskStatus.String()` / 原始 payload 检查原始字符串。
 
 ---
 
 ## `NopTaskStatus`
 
-Thin view over the orchestrator's JSON status payload.
+编排器 JSON 状态 payload 的薄视图。
 
 ```go
 type NopTaskStatus struct { /* raw map[string]any */ }
@@ -93,36 +90,36 @@ func (s *NopTaskStatus) NodeResults()  map[string]any
 func (s *NopTaskStatus) String()       string             // "NopTaskStatus(task_id=…, state=…)"
 ```
 
-The internal `raw` map is not exposed — accessors return zero-values
-(`""`, `nil`) when the underlying field is missing or mis-typed.
+内部 `raw` map 不暴露 —— 底层字段缺失或类型错配时，访问器返回零值
+（`""`、`nil`）。
 
 ---
 
 ## `TaskFrame` (0x40)
 
-Submit a DAG for execution. The DAG itself is kept as a free-form `any`
-value that matches the NPS-5 wire shape (`{"nodes": [...], "edges": [...]}`).
+提交 DAG 供执行。DAG 本身保留为匹配 NPS-5 线路形状
+（`{"nodes": [...], "edges": [...]}`）的自由形式 `any` 值。
 
 ```go
 type TaskFrame struct {
     TaskID      string
-    DAG         any                  // free-form DAG JSON
+    DAG         any                  // 自由形式 DAG JSON
     TimeoutMs   *uint64
-    CallbackURL *string               // SSRF-validated by orchestrator
+    CallbackURL *string               // 编排器做 SSRF 校验
     Context     any                   // { "session_key", "requester_nid", "trace_id" }
     Priority    *string               // "low" | "normal" | "high"
-    Depth       *int64                // delegate chain depth, max 3
+    Depth       *int64                // 委托链深度，最大 3
 }
 ```
 
-Spec limits the orchestrator enforces (NPS-5 §8.2): max 32 nodes per DAG,
-max 3 levels of delegate chain, max timeout 3 600 000 ms (1 h).
+编排器强制的规范限制（NPS-5 §8.2）：每 DAG 最多 32 节点、
+委托链最多 3 层、超时上限 3 600 000 ms（1 小时）。
 
 ---
 
 ## `DelegateFrame` (0x41)
 
-Per-node invocation emitted by the orchestrator to each agent.
+编排器向每个 agent 发出的逐节点调用。
 
 ```go
 type DelegateFrame struct {
@@ -136,43 +133,41 @@ type DelegateFrame struct {
 }
 ```
 
-> Field naming differs from other SDKs: the Go SDK uses `TargetNID` +
-> `Config` where the .NET / Python / Java SDKs use `agent_nid` +
-> `params`. Wire payloads follow the field names above (`target_nid` /
-> `config`).
+> 字段命名与其他 SDK 不同：Go SDK 用 `TargetNID` + `Config`，而
+> .NET / Python / Java SDK 用 `agent_nid` + `params`。线路 payload
+> 遵循上述字段名（`target_nid` / `config`）。
 
 ---
 
 ## `SyncFrame` (0x42)
 
-Fan-in barrier — waits for K-of-N upstream subtasks.
+Fan-in 屏障 —— 等待 K-of-N 上游子任务。
 
 ```go
 type SyncFrame struct {
     TaskID      string
     SyncID      string
     SubtaskIDs  []string
-    MinRequired int64               // 0 = strict all-of
+    MinRequired int64               // 0 = 严格 all-of
     Aggregate   string              // "merge" | "first" | "fastest_k" | "all"
     TimeoutMs   *uint64
 }
 ```
 
-`SyncFrameFromDict` defaults `Aggregate` to `"merge"` when the field is
-missing.
+`SyncFrameFromDict` 在字段缺失时将 `Aggregate` 缺省为 `"merge"`。
 
-`MinRequired` semantics:
+`MinRequired` 语义：
 
-| Value | Meaning |
-|-------|---------|
-| `0`   | Wait for all of `SubtaskIDs` (strict fan-in). |
-| `K`   | Proceed as soon as K upstream subtasks have completed. |
+| 值    | 含义 |
+|-------|------|
+| `0`   | 等待 `SubtaskIDs` 全部（严格 fan-in）。 |
+| `K`   | 只要 K 个上游子任务完成即继续。 |
 
 ---
 
 ## `AlignStreamFrame` (0x43)
 
-Streaming progress / partial result frame for a delegated subtask.
+委托子任务的流式进度 / 部分结果帧。
 
 ```go
 type AlignStreamFrame struct {
@@ -182,24 +177,23 @@ type AlignStreamFrame struct {
     Seq        uint64
     IsFinal    bool
     SourceNID  *string
-    Result     any                  // opaque payload
+    Result     any                  // 不透明 payload
     Error      map[string]any       // { "error_code", "message" }
     WindowSize *uint64
 }
 
-func (f *AlignStreamFrame) ErrorCode()    string   // shortcut for Error["error_code"]
-func (f *AlignStreamFrame) ErrorMessage() string   // shortcut for Error["message"]
+func (f *AlignStreamFrame) ErrorCode()    string   // Error["error_code"] 的快捷方法
+func (f *AlignStreamFrame) ErrorMessage() string   // Error["message"] 的快捷方法
 ```
 
-`AlignStreamFrame` replaces the deprecated `AlignFrame (0x05)` — it
-carries task context (`TaskID` + `SubtaskID` + `SyncID`) and binds the
-stream to a `SourceNID`.
+`AlignStreamFrame` 替代已弃用的 `AlignFrame (0x05)` —— 它携带任务
+上下文（`TaskID` + `SubtaskID` + `SyncID`）并把流绑定到 `SourceNID`。
 
 ---
 
 ## `NopClient`
 
-HTTP-mode NOP client.
+HTTP 模式 NOP 客户端。
 
 ```go
 type NopClient struct { /* … */ }
@@ -214,48 +208,45 @@ func (c *NopClient) Cancel   (ctx context.Context, taskID string)      error
 func (c *NopClient) Wait(
     ctx     context.Context,
     taskID  string,
-    opts    *WaitOptions,      // pass nil for defaults
+    opts    *WaitOptions,      // 传 nil 使用默认
 ) (*NopTaskStatus, error)
 
 type WaitOptions struct {
-    PollInterval time.Duration   // default 500ms
-    MaxAttempts  int             // 0 = unlimited (rely on ctx for timeout)
+    PollInterval time.Duration   // 默认 500ms
+    MaxAttempts  int             // 0 = 不限（依赖 ctx 做超时）
 }
 ```
 
-### HTTP routes
+### HTTP 路由
 
-| Method       | Method | Path                      | Request body                   | Response |
-|--------------|--------|---------------------------|--------------------------------|----------|
-| `Submit`     | POST   | `/tasks`                  | JSON of `TaskFrame.ToDict()`   | JSON `{ "task_id": … }` |
-| `GetStatus`  | GET    | `/tasks/{id}`             | —                              | JSON status dict |
+| 名称         | 方法   | 路径                      | 请求体                         | 响应 |
+|--------------|--------|---------------------------|--------------------------------|------|
+| `Submit`     | POST   | `/tasks`                  | `TaskFrame.ToDict()` 的 JSON   | JSON `{ "task_id": … }` |
+| `GetStatus`  | GET    | `/tasks/{id}`             | —                              | JSON 状态 dict |
 | `Cancel`     | POST   | `/tasks/{id}/cancel`      | `{"task_id","action":"cancel"}`| — |
-| `Wait`       | polls `GetStatus` until terminal / ctx cancelled / `MaxAttempts` exceeded; `time.After(PollInterval)` between polls |
+| `Wait`       | 轮询 `GetStatus` 直到终态 / ctx 取消 / 超过 `MaxAttempts`；轮询间隔为 `time.After(PollInterval)` |
 
-> `Cancel` uses `POST /tasks/{id}/cancel` — this differs from the Rust
-> SDK which uses `DELETE /tasks/{id}`. The route is encoded in the Go
-> client and is not configurable.
+> `Cancel` 使用 `POST /tasks/{id}/cancel` —— 与 Rust SDK 使用
+> `DELETE /tasks/{id}` 不同。路由写死在 Go 客户端中，不可配置。
 
-Requests use `Content-Type: application/json` — the NOP client submits
-the task dict as plain JSON, not as a framed `application/x-nps-frame`
-payload.
+请求使用 `Content-Type: application/json` —— NOP 客户端以纯 JSON
+提交任务 dict，而非框定为 `application/x-nps-frame` payload。
 
-`Wait` returns `ctx.Err()` if the context is cancelled; returns the
-terminal `*NopTaskStatus` on success; returns the most recent non-terminal
-status plus an error like `"NOP Wait: exceeded N poll attempts …"` when
-`opts.MaxAttempts > 0` is reached.
+`Wait` 若 context 取消则返回 `ctx.Err()`；成功时返回终态
+`*NopTaskStatus`；达到 `opts.MaxAttempts > 0` 时返回最近非终态状态
+加上类似 `"NOP Wait: exceeded N poll attempts …"` 的错误。
 
-### Errors
+### 错误
 
-- Non-2xx HTTP → `fmt.Errorf("NOP %s failed: HTTP %d", op, status)` where
-  `op` is `"Submit"` / `"GetStatus"` / `"Cancel"`.
-- If `Submit` gets a 2xx response with no `task_id` in the body, the
-  client falls back to returning `frame.TaskID`.
-- Transport failures surface from `http.Client.Do` / `json.Decoder`.
+- 非 2xx HTTP → `fmt.Errorf("NOP %s failed: HTTP %d", op, status)`，其中
+  `op` 为 `"Submit"` / `"GetStatus"` / `"Cancel"`。
+- 若 `Submit` 收到 2xx 响应但 body 中无 `task_id`，客户端回退到返回
+  `frame.TaskID`。
+- 传输故障由 `http.Client.Do` / `json.Decoder` 浮现。
 
 ---
 
-## End-to-end
+## 端到端
 
 ```go
 import (
@@ -309,7 +300,7 @@ status, err := client.Wait(ctx, tid, &nop.WaitOptions{
 if err != nil { /* … */ }
 _ = status.String()
 
-// Backoff computation
+// Backoff 计算
 delay := nop.ComputeDelayMs(nop.BackoffExponential, 500, 30_000, 2)  // → 2000
 _ = delay
 ```
