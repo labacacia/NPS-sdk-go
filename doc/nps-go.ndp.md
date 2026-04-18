@@ -1,3 +1,5 @@
+English | [中文版](./nps-go.ndp.cn.md)
+
 # `github.com/labacacia/nps/impl/go/ndp` — Reference
 
 > Spec: [NPS-4 NDP v0.2](https://github.com/labacacia/NPS-Release/blob/main/spec/NPS-4-NDP.md)
