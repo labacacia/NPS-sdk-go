@@ -173,6 +173,98 @@ func CapsFrameFromDict(d core.FrameDict) *CapsFrame {
 	}
 }
 
+// ── HelloFrame ────────────────────────────────────────────────────────────────
+
+// HelloFrame is the native-mode client handshake frame (NPS-1 §4.6).
+//
+// The Agent MUST send this as the very first frame after opening a TCP/QUIC
+// connection; the Node replies with a CapsFrame. Not used in HTTP mode.
+//
+// Preferred encoding is Tier-1 JSON because the encoding has not yet been
+// negotiated at handshake time.
+type HelloFrame struct {
+	NpsVersion           string
+	SupportedEncodings   []string
+	SupportedProtocols   []string
+	MinVersion           *string
+	AgentID              *string
+	MaxFramePayload      uint64
+	ExtSupport           bool
+	MaxConcurrentStreams uint64
+	E2eEncAlgorithms     []string // nil when absent
+}
+
+const (
+	HelloDefaultMaxFramePayload      uint64 = 0xFFFF
+	HelloDefaultMaxConcurrentStreams uint64 = 32
+)
+
+func (f *HelloFrame) FrameType() core.FrameType { return core.FrameTypeHello }
+
+func (f *HelloFrame) ToDict() core.FrameDict {
+	maxPayload := f.MaxFramePayload
+	if maxPayload == 0 {
+		maxPayload = HelloDefaultMaxFramePayload
+	}
+	maxStreams := f.MaxConcurrentStreams
+	if maxStreams == 0 {
+		maxStreams = HelloDefaultMaxConcurrentStreams
+	}
+	d := core.FrameDict{
+		"nps_version":            f.NpsVersion,
+		"supported_encodings":    f.SupportedEncodings,
+		"supported_protocols":    f.SupportedProtocols,
+		"max_frame_payload":      maxPayload,
+		"ext_support":            f.ExtSupport,
+		"max_concurrent_streams": maxStreams,
+	}
+	if f.MinVersion != nil          { d["min_version"]        = *f.MinVersion }
+	if f.AgentID != nil             { d["agent_id"]           = *f.AgentID }
+	if f.E2eEncAlgorithms != nil    { d["e2e_enc_algorithms"] = f.E2eEncAlgorithms }
+	return d
+}
+
+func HelloFrameFromDict(d core.FrameDict) *HelloFrame {
+	asStringSlice := func(v any) []string {
+		switch x := v.(type) {
+		case []string:
+			return x
+		case []any:
+			out := make([]string, 0, len(x))
+			for _, e := range x {
+				if s, ok := e.(string); ok {
+					out = append(out, s)
+				}
+			}
+			return out
+		}
+		return nil
+	}
+
+	f := &HelloFrame{
+		NpsVersion:         str(d, "nps_version"),
+		SupportedEncodings: asStringSlice(d["supported_encodings"]),
+		SupportedProtocols: asStringSlice(d["supported_protocols"]),
+		MinVersion:         optStr(d, "min_version"),
+		AgentID:            optStr(d, "agent_id"),
+	}
+	if v, ok := d["ext_support"].(bool); ok {
+		f.ExtSupport = v
+	}
+	f.MaxFramePayload = toUint64(d["max_frame_payload"])
+	if f.MaxFramePayload == 0 {
+		f.MaxFramePayload = HelloDefaultMaxFramePayload
+	}
+	f.MaxConcurrentStreams = toUint64(d["max_concurrent_streams"])
+	if f.MaxConcurrentStreams == 0 {
+		f.MaxConcurrentStreams = HelloDefaultMaxConcurrentStreams
+	}
+	if _, present := d["e2e_enc_algorithms"]; present {
+		f.E2eEncAlgorithms = asStringSlice(d["e2e_enc_algorithms"])
+	}
+	return f
+}
+
 // ── ErrorFrame ────────────────────────────────────────────────────────────────
 
 type ErrorFrame struct {

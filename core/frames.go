@@ -16,6 +16,7 @@ const (
 	FrameTypeDiff        FrameType = 0x02
 	FrameTypeStream      FrameType = 0x03
 	FrameTypeCaps        FrameType = 0x04
+	FrameTypeHello       FrameType = 0x06
 	FrameTypeQuery       FrameType = 0x10
 	FrameTypeAction      FrameType = 0x11
 	FrameTypeIdent       FrameType = 0x20
@@ -33,7 +34,7 @@ const (
 
 var knownFrameTypes = map[FrameType]bool{
 	FrameTypeAnchor: true, FrameTypeDiff: true, FrameTypeStream: true,
-	FrameTypeCaps: true, FrameTypeQuery: true, FrameTypeAction: true,
+	FrameTypeCaps: true, FrameTypeHello: true, FrameTypeQuery: true, FrameTypeAction: true,
 	FrameTypeIdent: true, FrameTypeTrust: true, FrameTypeRevoke: true,
 	FrameTypeAnnounce: true, FrameTypeResolve: true, FrameTypeGraph: true,
 	FrameTypeTask: true, FrameTypeDelegate: true, FrameTypeSync: true,

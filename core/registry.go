@@ -19,7 +19,7 @@ func (r *FrameRegistry) IsRegistered(ft FrameType) bool { return r.registered[ft
 func CreateDefaultRegistry() *FrameRegistry {
 	r := NewFrameRegistry()
 	for _, ft := range []FrameType{
-		FrameTypeAnchor, FrameTypeDiff, FrameTypeStream, FrameTypeCaps, FrameTypeError,
+		FrameTypeAnchor, FrameTypeDiff, FrameTypeStream, FrameTypeCaps, FrameTypeHello, FrameTypeError,
 	} {
 		r.Register(ft)
 	}

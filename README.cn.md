@@ -1,66 +1,42 @@
 [English Version](./README.md) | 中文版
 
-# NPS Go SDK
+# NPS Go SDK v1.0.0-alpha.2
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/labacacia/NPS-sdk-go.svg)](https://pkg.go.dev/github.com/labacacia/NPS-sdk-go)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](./LICENSE)
-[![Go](https://img.shields.io/badge/Go-1.23%2B-00ADD8)](https://go.dev/)
+Neural Protocol Suite (NPS) 的 Go 参考实现 —— 覆盖五个子协议：**NCP · NWP · NIP · NDP · NOP**。
 
-**Neural Protocol Suite (NPS)** 的 Go 客户端库 —— 专为 AI Agent 与神经模型设计的完整互联网协议族。
-
-模块路径：`github.com/labacacia/NPS-sdk-go`
-
----
-
-## NPS 仓库导航
-
-| 仓库 | 职责 | 语言 |
-|------|------|------|
-| [NPS-Release](https://github.com/labacacia/NPS-Release) | 协议规范（权威来源） | Markdown / YAML |
-| [NPS-sdk-dotnet](https://github.com/labacacia/NPS-sdk-dotnet) | 参考实现 | C# / .NET 10 |
-| [NPS-sdk-py](https://github.com/labacacia/NPS-sdk-py) | 异步 Python SDK | Python 3.11+ |
-| [NPS-sdk-ts](https://github.com/labacacia/NPS-sdk-ts) | Node/浏览器 SDK | TypeScript |
-| [NPS-sdk-java](https://github.com/labacacia/NPS-sdk-java) | JVM SDK | Java 21+ |
-| [NPS-sdk-rust](https://github.com/labacacia/NPS-sdk-rust) | 异步 SDK | Rust stable |
-| **[NPS-sdk-go](https://github.com/labacacia/NPS-sdk-go)**（本仓库） | Go SDK | Go 1.23+ |
+| | |
+|---|---|
+| **Module** | `github.com/labacacia/NPS-sdk-go` |
+| **Go** | 1.25+ |
+| **测试** | 75 通过 |
+| **许可证** | Apache 2.0 |
 
 ---
 
-## 状态
+## 包
 
-**v1.0.0-alpha.1 — Phase 2 首个发布**
+| Package | 协议 | 说明 |
+|---------|------|------|
+| `core` | NCP | 帧类型、帧头编解码、注册表、AnchorFrame 缓存 |
+| `ncp` | NCP | AnchorFrame、DiffFrame、StreamFrame、CapsFrame、HelloFrame、ErrorFrame |
+| `nwp` | NWP | QueryFrame、ActionFrame、NwpClient（HTTP 模式） |
+| `nip` | NIP | IdentFrame、TrustFrame、RevokeFrame、NipIdentity（Ed25519） |
+| `ndp` | NDP | AnnounceFrame、ResolveFrame、GraphFrame、InMemoryNdpRegistry、NdpAnnounceValidator |
+| `nop` | NOP | TaskFrame、DelegateFrame、SyncFrame、AlignStreamFrame、NopClient |
 
-覆盖 NPS 全部五个协议：NCP + NWP + NIP + NDP + NOP，75 个测试全部通过。
-
-## 运行要求
-
-- Go 1.23+（推荐 1.25）
-- 依赖（通过 `go.mod` 管理）：
-  - `github.com/vmihailenco/msgpack/v5`
-  - `golang.org/x/crypto`（Ed25519、AES-256-GCM）
+---
 
 ## 安装
 
 ```bash
-go get github.com/labacacia/NPS-sdk-go@v1.0.0-alpha.1
+go get github.com/labacacia/NPS-sdk-go
 ```
 
-## 包
-
-| 引用路径 | 说明 | 参考文档 |
-|----------|------|----------|
-| `.../impl/go/core` | 帧头、编解码（Tier-1 JSON / Tier-2 MsgPack）、注册表、AnchorFrame 缓存、错误类型 | [`doc/nps-go.core.cn.md`](./doc/nps-go.core.cn.md) |
-| `.../impl/go/ncp`  | NCP 帧：`AnchorFrame`、`DiffFrame`、`StreamFrame`、`CapsFrame`、`ErrorFrame` | [`doc/nps-go.ncp.cn.md`](./doc/nps-go.ncp.cn.md) |
-| `.../impl/go/nwp`  | NWP 帧：`QueryFrame`、`ActionFrame`；HTTP `NwpClient` | [`doc/nps-go.nwp.cn.md`](./doc/nps-go.nwp.cn.md) |
-| `.../impl/go/nip`  | NIP 帧：`IdentFrame`、`TrustFrame`、`RevokeFrame`；Ed25519 `NipIdentity` | [`doc/nps-go.nip.cn.md`](./doc/nps-go.nip.cn.md) |
-| `.../impl/go/ndp`  | NDP 帧：`AnnounceFrame`、`ResolveFrame`、`GraphFrame`；`InMemoryNdpRegistry` + `NdpAnnounceValidator` | [`doc/nps-go.ndp.cn.md`](./doc/nps-go.ndp.cn.md) |
-| `.../impl/go/nop`  | NOP 帧：`TaskFrame`、`DelegateFrame`、`SyncFrame`、`AlignStreamFrame`；`BackoffStrategy` + `NopTaskStatus` + `NopClient` | [`doc/nps-go.nop.cn.md`](./doc/nps-go.nop.cn.md) |
-
-完整 API 参考见 [`doc/`](./doc/) —— 从 [`doc/overview.cn.md`](./doc/overview.cn.md) 入门。叙事性教程参见 [`doc/sdk-usage.cn.md`](./doc/sdk-usage.cn.md) / [`doc/sdk-usage.md`](./doc/sdk-usage.md)。
+---
 
 ## 快速开始
 
-### 编解码帧
+### NCP —— 帧编解码
 
 ```go
 import (
@@ -68,98 +44,198 @@ import (
     "github.com/labacacia/NPS-sdk-go/ncp"
 )
 
-registry := core.NewDefaultRegistry()
-codec    := core.NewFrameCodec(registry)
+// 创建完整注册表（5 个协议）
+reg := core.CreateFullRegistry()
+codec := core.NewNpsFrameCodec(reg)
 
-schema := ncp.FrameSchema{Fields: []ncp.SchemaField{
-    {Name: "id",    Type: "uint64"},
-    {Name: "price", Type: "decimal", Semantic: "commerce.price.usd"},
-}}
+// 构造并编码 AnchorFrame
 frame := &ncp.AnchorFrame{
-    AnchorID: core.ComputeAnchorID(schema),
-    Schema:   schema,
+    AnchorID: "sha256:abc...",
+    Schema:   core.FrameDict{"type": "object", "version": "1"},
     TTL:      3600,
 }
+wire, err := codec.Encode(frame.FrameType(), frame.ToDict(), core.EncodingTierMsgPack, true)
+// wire 已可发送
 
-wire, _  := codec.Encode(frame)                // 默认 MsgPack（Tier-2）
-decoded, _ := codec.Decode(wire)
+// 接收端解码
+ft, dict, err := codec.Decode(wire)
+received := ncp.AnchorFrameFromDict(dict)
 ```
 
-### 查询 Memory Node（NWP）
+### NCP —— AnchorFrame 缓存
+
+```go
+cache := core.NewAnchorFrameCache()
+
+// 带 TTL 存储
+schema := core.FrameDict{"type": "object", "fields": []any{"name", "value"}}
+anchorID, err := cache.Set(schema, 3600) // 1 小时 TTL
+
+// 读取（过期返回 nil）
+schema, err = cache.GetRequired(anchorID)
+```
+
+### NWP —— HTTP 客户端
 
 ```go
 import "github.com/labacacia/NPS-sdk-go/nwp"
 
-client := nwp.NewClient("http://node.example.com:17433")
-caps, err := client.Query(ctx, &nwp.QueryFrame{
-    AnchorRef: "sha256:<id>",
-    Limit:     50,
-})
+client := nwp.NewNwpClient("http://node.example.com:17433")
+
+// 查询
+qf := &nwp.QueryFrame{AnchorRef: "sha256:abc...", Filters: map[string]any{"status": "active"}}
+capsFrame, err := client.Query(ctx, qf)
+
+// 流式
+frames, err := client.Stream(ctx, qf)
+for _, sf := range frames {
+    fmt.Println(sf.Payload)
+}
+
+// 同步 Action 调用
+af := &nwp.ActionFrame{Action: "create", Payload: map[string]any{"name": "item"}}
+result, err := client.Invoke(ctx, af)
+
+// 异步 Action 调用
+af.Async = true
+result, err = client.Invoke(ctx, af)
+fmt.Println(result.Async.TaskID)
 ```
 
-### Ed25519 身份（NIP）
+### NIP —— 身份与签名
 
 ```go
 import "github.com/labacacia/NPS-sdk-go/nip"
 
-id, _ := nip.GenerateIdentity()
+// 生成新身份
+id, err := nip.Generate()
+fmt.Println(id.PubKeyString()) // "ed25519:<hex>"
 
-// 使用 AES-256-GCM + PBKDF2 口令持久化
-_ = id.Save("node.key", "my-passphrase")
+// 对帧 dict 签名
+payload := core.FrameDict{"nid": "urn:nps:node:example.com:agent", "pub_key": id.PubKeyString()}
+sig := id.Sign(payload)
 
-// 加载并签名
-loaded, _ := nip.LoadIdentity("node.key", "my-passphrase")
-sig, _    := loaded.Sign(map[string]any{"nid": "urn:nps:node:example.com:data"})
-ok, _     := loaded.Verify(map[string]any{"nid": "urn:nps:node:example.com:data"}, sig)
+// 验签
+ok := id.Verify(payload, sig)
+
+// 仅凭公钥字符串验签（无需私钥）
+ok = nip.VerifyWithPubKeyStr(payload, "ed25519:<hex>", sig)
+
+// 保存 / 加载（AES-256-GCM + PBKDF2-SHA256，600k 轮）
+err = id.Save("/path/to/identity.json", "my-passphrase")
+loaded, err := nip.Load("/path/to/identity.json", "my-passphrase")
 ```
 
-### 公告与解析（NDP）
+### NDP —— 发现注册表
 
 ```go
 import "github.com/labacacia/NPS-sdk-go/ndp"
 
-registry  := ndp.NewInMemoryRegistry()
-validator := ndp.NewAnnounceValidator()
-validator.RegisterPublicKey(nid, id.PubKeyString())
+registry := ndp.NewInMemoryNdpRegistry()
 
-_ = registry.Announce(frame)
-resolved, _ := registry.Resolve("nwp://example.com/data")
+// 公告节点
+frame := &ndp.AnnounceFrame{
+    NID:       "urn:nps:node:example.com:agent",
+    Addresses: []map[string]any{{"host": "example.com", "port": uint64(17433), "protocol": "nps"}},
+    Caps:      []string{"nwp", "nop"},
+    TTL:       300,
+    Timestamp: time.Now().UTC().Format(time.RFC3339),
+}
+registry.Announce(frame)
+
+// 解析目标 URL
+result := registry.Resolve("nwp://example.com/agent")
+// result.Host、result.Port、result.Protocol
+
+// 校验 announce 签名
+validator := ndp.NewNdpAnnounceValidator()
+validator.RegisterPublicKey("urn:nps:node:example.com:agent", "ed25519:<hex>")
+frame.Signature = id.Sign(frame.UnsignedDict())
+result := validator.Validate(frame)
+// result.IsValid、result.ErrorCode、result.Message
 ```
 
-### 提交 NOP 任务
+### NOP —— 编排客户端
 
 ```go
 import "github.com/labacacia/NPS-sdk-go/nop"
 
-client  := nop.NewClient("http://orchestrator.example.com:17433")
-taskID, _ := client.Submit(ctx, &nop.TaskFrame{
-    TaskID: "job-1",
-    DAG: nop.TaskDAG{
-        Nodes: []nop.TaskNode{{ID: "a", Action: "data.fetch", Agent: "urn:nps:node:data.example.com"}},
-    },
-})
-status, _ := client.Wait(ctx, taskID, 30*time.Second)
+client := nop.NewNopClient("http://orchestrator.example.com:17433")
+
+// 提交 DAG 任务
+tf := &nop.TaskFrame{
+    TaskID:    "task-" + uuid,
+    DAG:       map[string]any{...},
+    TimeoutMs: &timeout,
+}
+taskID, err := client.Submit(ctx, tf)
+
+// 轮询状态
+status, err := client.GetStatus(ctx, taskID)
+fmt.Println(status.State()) // "running"
+
+// 等待完成（每 500ms 轮询一次）
+status, err = client.Wait(ctx, taskID, nil)
+fmt.Println(status.State())        // "completed"
+fmt.Println(status.NodeResults())  // map[string]any
+
+// 取消
+err = client.Cancel(ctx, taskID)
 ```
 
-## 编码分层
+---
 
-| Tier | 常量 | 说明 |
+## 帧类型
+
+| 帧 | 类型码 | 包 |
+|----|--------|----|
+| AnchorFrame | 0x01 | `ncp` |
+| DiffFrame | 0x02 | `ncp` |
+| StreamFrame | 0x03 | `ncp` |
+| CapsFrame | 0x04 | `ncp` |
+| HelloFrame | 0x06 | `ncp` |
+| QueryFrame | 0x10 | `nwp` |
+| ActionFrame | 0x11 | `nwp` |
+| IdentFrame | 0x20 | `nip` |
+| TrustFrame | 0x21 | `nip` |
+| RevokeFrame | 0x22 | `nip` |
+| AnnounceFrame | 0x30 | `ndp` |
+| ResolveFrame | 0x31 | `ndp` |
+| GraphFrame | 0x32 | `ndp` |
+| TaskFrame | 0x40 | `nop` |
+| DelegateFrame | 0x41 | `nop` |
+| SyncFrame | 0x42 | `nop` |
+| AlignStreamFrame | 0x43 | `nop` |
+| ErrorFrame | 0xFE | `ncp` |
+
+---
+
+## 编码
+
+| Tier | 常量 | 备注 |
 |------|------|------|
-| Tier-1 | `core.EncodingTierJSON` | UTF-8 JSON —— 开发 / 互操作 |
-| Tier-2 | `core.EncodingTierMsgPack` | MessagePack —— 默认，体积约小 60% |
+| JSON | `core.EncodingTierJSON` | 可读，Tier-1 |
+| MsgPack | `core.EncodingTierMsgPack` | 约 60% 体积削减，Tier-2（默认） |
 
-## NIP CA Server
+---
 
-`ca-server/` 目录提供一个独立 NIP 证书颁发机构服务 —— 基于 `net/http` 标准库，SQLite 存储，开箱即用的 Docker 部署。
+## 退避策略（NOP）
 
-## 测试
+```go
+delay := nop.ComputeDelayMs(nop.BackoffExponential, 100, 5000, attempt)
+// BackoffFixed、BackoffLinear、BackoffExponential
+```
+
+---
+
+## 运行测试
 
 ```bash
 go test ./...
 ```
 
+---
+
 ## 许可证
 
-Apache 2.0 —— 详见 [LICENSE](./LICENSE) 与 [NOTICE](./NOTICE)。
-
-Copyright 2026 INNO LOTUS PTY LTD
+Apache 2.0 —— Copyright 2026 INNO LOTUS PTY LTD
