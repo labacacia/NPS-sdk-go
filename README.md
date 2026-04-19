@@ -1,66 +1,42 @@
 English | [中文版](./README.cn.md)
 
-# NPS Go SDK
+# NPS Go SDK v1.0.0-alpha.2
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/labacacia/NPS-sdk-go.svg)](https://pkg.go.dev/github.com/labacacia/NPS-sdk-go)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](./LICENSE)
-[![Go](https://img.shields.io/badge/Go-1.23%2B-00ADD8)](https://go.dev/)
+Go reference implementation of the Neural Protocol Suite (NPS) — covers all five sub-protocols: **NCP · NWP · NIP · NDP · NOP**.
 
-Go client library for the **Neural Protocol Suite (NPS)** — a complete internet protocol suite purpose-built for AI Agents and models.
-
-Module path: `github.com/labacacia/NPS-sdk-go`
-
----
-
-## NPS Repositories
-
-| Repo | Role | Language |
-|------|------|----------|
-| [NPS-Release](https://github.com/labacacia/NPS-Release) | Protocol specifications (authoritative) | Markdown / YAML |
-| [NPS-sdk-dotnet](https://github.com/labacacia/NPS-sdk-dotnet) | Reference implementation | C# / .NET 10 |
-| [NPS-sdk-py](https://github.com/labacacia/NPS-sdk-py) | Async Python SDK | Python 3.11+ |
-| [NPS-sdk-ts](https://github.com/labacacia/NPS-sdk-ts) | Node/browser SDK | TypeScript |
-| [NPS-sdk-java](https://github.com/labacacia/NPS-sdk-java) | JVM SDK | Java 21+ |
-| [NPS-sdk-rust](https://github.com/labacacia/NPS-sdk-rust) | Async SDK | Rust stable |
-| **[NPS-sdk-go](https://github.com/labacacia/NPS-sdk-go)** (this repo) | Go SDK | Go 1.23+ |
+| | |
+|---|---|
+| **Module** | `github.com/labacacia/NPS-sdk-go` |
+| **Go** | 1.25+ |
+| **Tests** | 75 passing |
+| **License** | Apache 2.0 |
 
 ---
 
-## Status
+## Packages
 
-**v1.0.0-alpha.1 — Phase 2 initial release**
+| Package | Protocol | Description |
+|---------|----------|-------------|
+| `core` | NCP | Frame types, header codec, registry, AnchorFrame cache |
+| `ncp` | NCP | AnchorFrame, DiffFrame, StreamFrame, CapsFrame, HelloFrame, ErrorFrame |
+| `nwp` | NWP | QueryFrame, ActionFrame, NwpClient (HTTP mode) |
+| `nip` | NIP | IdentFrame, TrustFrame, RevokeFrame, NipIdentity (Ed25519) |
+| `ndp` | NDP | AnnounceFrame, ResolveFrame, GraphFrame, InMemoryNdpRegistry, NdpAnnounceValidator |
+| `nop` | NOP | TaskFrame, DelegateFrame, SyncFrame, AlignStreamFrame, NopClient |
 
-Covers all five NPS protocols: NCP + NWP + NIP + NDP + NOP. 75 tests passing.
-
-## Requirements
-
-- Go 1.23+ (recommended 1.25)
-- Dependencies (managed via `go.mod`):
-  - `github.com/vmihailenco/msgpack/v5`
-  - `golang.org/x/crypto` (Ed25519, AES-256-GCM)
+---
 
 ## Installation
 
 ```bash
-go get github.com/labacacia/NPS-sdk-go@v1.0.0-alpha.1
+go get github.com/labacacia/NPS-sdk-go
 ```
 
-## Packages
-
-| Import path | Description | Reference |
-|-------------|-------------|-----------|
-| `.../impl/go/core` | Frame header, codec (Tier-1 JSON / Tier-2 MsgPack), registry, anchor cache, errors | [`doc/nps-go.core.md`](./doc/nps-go.core.md) |
-| `.../impl/go/ncp`  | NCP frames: `AnchorFrame`, `DiffFrame`, `StreamFrame`, `CapsFrame`, `ErrorFrame` | [`doc/nps-go.ncp.md`](./doc/nps-go.ncp.md) |
-| `.../impl/go/nwp`  | NWP frames: `QueryFrame`, `ActionFrame`; HTTP `NwpClient` | [`doc/nps-go.nwp.md`](./doc/nps-go.nwp.md) |
-| `.../impl/go/nip`  | NIP frames: `IdentFrame`, `TrustFrame`, `RevokeFrame`; Ed25519 `NipIdentity` | [`doc/nps-go.nip.md`](./doc/nps-go.nip.md) |
-| `.../impl/go/ndp`  | NDP frames: `AnnounceFrame`, `ResolveFrame`, `GraphFrame`; `InMemoryNdpRegistry` + `NdpAnnounceValidator` | [`doc/nps-go.ndp.md`](./doc/nps-go.ndp.md) |
-| `.../impl/go/nop`  | NOP frames: `TaskFrame`, `DelegateFrame`, `SyncFrame`, `AlignStreamFrame`; `BackoffStrategy` + `NopTaskStatus` + `NopClient` | [`doc/nps-go.nop.md`](./doc/nps-go.nop.md) |
-
-Full API reference lives under [`doc/`](./doc/) — start with [`doc/overview.md`](./doc/overview.md). For a narrative walkthrough see [`doc/sdk-usage.md`](./doc/sdk-usage.md) / [`doc/sdk-usage.cn.md`](./doc/sdk-usage.cn.md).
+---
 
 ## Quick Start
 
-### Encode and decode frames
+### NCP — Frame Codec
 
 ```go
 import (
@@ -68,98 +44,198 @@ import (
     "github.com/labacacia/NPS-sdk-go/ncp"
 )
 
-registry := core.NewDefaultRegistry()
-codec    := core.NewFrameCodec(registry)
+// Create a full registry (all 5 protocols)
+reg := core.CreateFullRegistry()
+codec := core.NewNpsFrameCodec(reg)
 
-schema := ncp.FrameSchema{Fields: []ncp.SchemaField{
-    {Name: "id",    Type: "uint64"},
-    {Name: "price", Type: "decimal", Semantic: "commerce.price.usd"},
-}}
+// Build and encode an AnchorFrame
 frame := &ncp.AnchorFrame{
-    AnchorID: core.ComputeAnchorID(schema),
-    Schema:   schema,
+    AnchorID: "sha256:abc...",
+    Schema:   core.FrameDict{"type": "object", "version": "1"},
     TTL:      3600,
 }
+wire, err := codec.Encode(frame.FrameType(), frame.ToDict(), core.EncodingTierMsgPack, true)
+// wire is ready to send over the network
 
-wire, _  := codec.Encode(frame)                // MsgPack (Tier-2) by default
-decoded, _ := codec.Decode(wire)
+// Decode on the receiving end
+ft, dict, err := codec.Decode(wire)
+received := ncp.AnchorFrameFromDict(dict)
 ```
 
-### Query a Memory Node (NWP)
+### NCP — AnchorFrame Cache
+
+```go
+cache := core.NewAnchorFrameCache()
+
+// Store with TTL
+schema := core.FrameDict{"type": "object", "fields": []any{"name", "value"}}
+anchorID, err := cache.Set(schema, 3600) // 1-hour TTL
+
+// Retrieve (returns nil if expired)
+schema, err = cache.GetRequired(anchorID)
+```
+
+### NWP — HTTP Client
 
 ```go
 import "github.com/labacacia/NPS-sdk-go/nwp"
 
-client := nwp.NewClient("http://node.example.com:17433")
-caps, err := client.Query(ctx, &nwp.QueryFrame{
-    AnchorRef: "sha256:<id>",
-    Limit:     50,
-})
+client := nwp.NewNwpClient("http://node.example.com:17433")
+
+// Query
+qf := &nwp.QueryFrame{AnchorRef: "sha256:abc...", Filters: map[string]any{"status": "active"}}
+capsFrame, err := client.Query(ctx, qf)
+
+// Streaming
+frames, err := client.Stream(ctx, qf)
+for _, sf := range frames {
+    fmt.Println(sf.Payload)
+}
+
+// Invoke (sync action)
+af := &nwp.ActionFrame{Action: "create", Payload: map[string]any{"name": "item"}}
+result, err := client.Invoke(ctx, af)
+
+// Async invoke
+af.Async = true
+result, err = client.Invoke(ctx, af)
+fmt.Println(result.Async.TaskID)
 ```
 
-### Ed25519 identity (NIP)
+### NIP — Identity & Signing
 
 ```go
 import "github.com/labacacia/NPS-sdk-go/nip"
 
-id, _ := nip.GenerateIdentity()
+// Generate a new identity
+id, err := nip.Generate()
+fmt.Println(id.PubKeyString()) // "ed25519:<hex>"
 
-// Persist with AES-256-GCM + PBKDF2 passphrase
-_ = id.Save("node.key", "my-passphrase")
+// Sign a frame dict
+payload := core.FrameDict{"nid": "urn:nps:node:example.com:agent", "pub_key": id.PubKeyString()}
+sig := id.Sign(payload)
 
-// Load and sign
-loaded, _ := nip.LoadIdentity("node.key", "my-passphrase")
-sig, _    := loaded.Sign(map[string]any{"nid": "urn:nps:node:example.com:data"})
-ok, _     := loaded.Verify(map[string]any{"nid": "urn:nps:node:example.com:data"}, sig)
+// Verify
+ok := id.Verify(payload, sig)
+
+// Verify with just the public key string (no private key needed)
+ok = nip.VerifyWithPubKeyStr(payload, "ed25519:<hex>", sig)
+
+// Save / Load (AES-256-GCM + PBKDF2-SHA256, 600k iterations)
+err = id.Save("/path/to/identity.json", "my-passphrase")
+loaded, err := nip.Load("/path/to/identity.json", "my-passphrase")
 ```
 
-### Announce and resolve (NDP)
+### NDP — Discovery Registry
 
 ```go
 import "github.com/labacacia/NPS-sdk-go/ndp"
 
-registry  := ndp.NewInMemoryRegistry()
-validator := ndp.NewAnnounceValidator()
-validator.RegisterPublicKey(nid, id.PubKeyString())
+registry := ndp.NewInMemoryNdpRegistry()
 
-_ = registry.Announce(frame)
-resolved, _ := registry.Resolve("nwp://example.com/data")
+// Announce a node
+frame := &ndp.AnnounceFrame{
+    NID:       "urn:nps:node:example.com:agent",
+    Addresses: []map[string]any{{"host": "example.com", "port": uint64(17433), "protocol": "nps"}},
+    Caps:      []string{"nwp", "nop"},
+    TTL:       300,
+    Timestamp: time.Now().UTC().Format(time.RFC3339),
+}
+registry.Announce(frame)
+
+// Resolve a target URL
+result := registry.Resolve("nwp://example.com/agent")
+// result.Host, result.Port, result.Protocol
+
+// Validate announce signature
+validator := ndp.NewNdpAnnounceValidator()
+validator.RegisterPublicKey("urn:nps:node:example.com:agent", "ed25519:<hex>")
+frame.Signature = id.Sign(frame.UnsignedDict())
+result := validator.Validate(frame)
+// result.IsValid, result.ErrorCode, result.Message
 ```
 
-### Submit a NOP task
+### NOP — Orchestration Client
 
 ```go
 import "github.com/labacacia/NPS-sdk-go/nop"
 
-client  := nop.NewClient("http://orchestrator.example.com:17433")
-taskID, _ := client.Submit(ctx, &nop.TaskFrame{
-    TaskID: "job-1",
-    DAG: nop.TaskDAG{
-        Nodes: []nop.TaskNode{{ID: "a", Action: "data.fetch", Agent: "urn:nps:node:data.example.com"}},
-    },
-})
-status, _ := client.Wait(ctx, taskID, 30*time.Second)
+client := nop.NewNopClient("http://orchestrator.example.com:17433")
+
+// Submit a DAG task
+tf := &nop.TaskFrame{
+    TaskID:    "task-" + uuid,
+    DAG:       map[string]any{...},
+    TimeoutMs: &timeout,
+}
+taskID, err := client.Submit(ctx, tf)
+
+// Poll status
+status, err := client.GetStatus(ctx, taskID)
+fmt.Println(status.State()) // "running"
+
+// Wait for completion (polls every 500ms)
+status, err = client.Wait(ctx, taskID, nil)
+fmt.Println(status.State())        // "completed"
+fmt.Println(status.NodeResults())  // map[string]any
+
+// Cancel
+err = client.Cancel(ctx, taskID)
 ```
 
-## Encoding Tiers
+---
 
-| Tier | Constant | Description |
-|------|----------|-------------|
-| Tier-1 | `core.EncodingTierJSON` | UTF-8 JSON — development / interop |
-| Tier-2 | `core.EncodingTierMsgPack` | MessagePack — default, ~60% smaller |
+## Frame Types
 
-## NIP CA Server
+| Frame | Type Code | Package |
+|-------|-----------|---------|
+| AnchorFrame | 0x01 | `ncp` |
+| DiffFrame | 0x02 | `ncp` |
+| StreamFrame | 0x03 | `ncp` |
+| CapsFrame | 0x04 | `ncp` |
+| HelloFrame | 0x06 | `ncp` |
+| QueryFrame | 0x10 | `nwp` |
+| ActionFrame | 0x11 | `nwp` |
+| IdentFrame | 0x20 | `nip` |
+| TrustFrame | 0x21 | `nip` |
+| RevokeFrame | 0x22 | `nip` |
+| AnnounceFrame | 0x30 | `ndp` |
+| ResolveFrame | 0x31 | `ndp` |
+| GraphFrame | 0x32 | `ndp` |
+| TaskFrame | 0x40 | `nop` |
+| DelegateFrame | 0x41 | `nop` |
+| SyncFrame | 0x42 | `nop` |
+| AlignStreamFrame | 0x43 | `nop` |
+| ErrorFrame | 0xFE | `ncp` |
 
-A standalone NIP Certificate Authority server is bundled under [`ca-server/`](./ca-server/) — `net/http` stdlib, SQLite-backed, Docker-ready.
+---
 
-## Testing
+## Encoding
+
+| Tier | Constant | Notes |
+|------|----------|-------|
+| JSON | `core.EncodingTierJSON` | Human-readable, Tier-1 |
+| MsgPack | `core.EncodingTierMsgPack` | ~60% size reduction, Tier-2 (default) |
+
+---
+
+## Backoff Strategies (NOP)
+
+```go
+delay := nop.ComputeDelayMs(nop.BackoffExponential, 100, 5000, attempt)
+// BackoffFixed, BackoffLinear, BackoffExponential
+```
+
+---
+
+## Running Tests
 
 ```bash
 go test ./...
 ```
 
+---
+
 ## License
 
-Apache 2.0 — see [LICENSE](./LICENSE) and [NOTICE](./NOTICE).
-
-Copyright 2026 INNO LOTUS PTY LTD
+Apache 2.0 — Copyright 2026 INNO LOTUS PTY LTD
