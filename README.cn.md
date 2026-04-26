@@ -1,6 +1,6 @@
 [English Version](./README.md) | 中文版
 
-# NPS Go SDK v1.0.0-alpha.2
+# NPS Go SDK v1.0.0-alpha.3
 
 Neural Protocol Suite (NPS) 的 Go 参考实现 —— 覆盖五个子协议：**NCP · NWP · NIP · NDP · NOP**。
 
