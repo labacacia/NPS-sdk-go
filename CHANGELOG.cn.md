@@ -8,6 +8,56 @@
 
 ---
 
+## [1.0.0-alpha.4] —— 2026-04-30
+
+### 新增
+
+- **NPS-RFC-0001 Phase 2 —— NCP 连接前导（Go helper 跟进）。**
+  `ncp/preamble.go` 暴露 `WritePreamble(io.Writer)` 与
+  `ReadPreamble(io.Reader)`，往返字面量 `b"NPS/1.0\n"` 哨兵；
+  对应测试在 `ncp/preamble_test.go`。让 Go SDK 与 .NET / Python /
+  TypeScript / Java 在 alpha.4 的 preamble helper 持平。
+- **NPS-RFC-0002 Phase A/B —— X.509 NID 证书 + ACME `agent-01`
+  （Go 端口）。** 新增 `nip/` 子模块：
+  - `nip/x509/` —— X.509 NID 证书 builder + verifier
+    (`x509.Builder`, `x509.Verifier`)，复用 Go 标准库 `crypto/x509`。
+  - `nip/acme/` —— ACME `agent-01` 客户端 + 服务端参考实现（挑战签发、
+    key authorization、按 NPS-RFC-0002 Phase B 的 JWS 签名 wire 包络）。
+  - `nip/assurance_level.go` —— Agent 身份保证等级
+    （`anonymous` / `attested` / `verified`），承接 NPS-RFC-0003。
+  - `nip/cert_format.go` —— IdentFrame 的 `cert_format` 判别器
+    （`v1` Ed25519 vs. `x509`）。
+  - `nip/error_codes.go` —— NIP 错误码命名空间。
+  - `nip/verifier.go` —— dual-trust IdentFrame 验证器（v1 + X.509）。
+- 21 个新测试覆盖 preamble 往返、X.509 签发 + 解析、dual-trust 验证、
+  ACME agent-01 全流程。总数：96 tests 全绿（alpha.3 时为 75）。
+
+### 变更
+
+- 版本升级至 `1.0.0-alpha.4`，与 NPS `v1.0.0-alpha.4` 套件同步。
+- `nip/frames.go` —— IdentFrame wire 形状扩展，可携带可选的
+  `cert_format` 判别器 + 叶子 `x509_chain` 字段，与 v1 Ed25519
+  字段并存。alpha.3 写出的 v1 IdentFrame 仍可被 alpha.4 验签。
+
+### 套件级 alpha.4 要点
+
+- **NPS-RFC-0002 X.509 + ACME** —— 完整跨 SDK 端口波（.NET / Java /
+  Python / TypeScript / Go / Rust）。服务端可签发 dual-trust IdentFrame
+  （v1 Ed25519 + X.509 leaf 链回自签 root），NID 可通过 ACME
+  `agent-01` 自助上线。
+- **NPS-CR-0002 —— Anchor Node topology 查询** ——
+  `topology.snapshot` / `topology.stream` 查询类型（.NET 参考实现 +
+  L2 conformance 测试套）。Go 消费侧 helper 后续版本跟进；本 SDK
+  的 `nwp.AnchorNode` 形状与 alpha.3 一致。
+- **`nps-registry` SQLite 实仓** + **`nps-ledger` Phase 2**（SQLite +
+  Merkle + STH + inclusion proof）在对应 daemon 仓库交付。
+
+### 涵盖模块
+
+- core / ncp / nwp / nip（新增 `nip/x509`、`nip/acme`） / ndp / nop
+
+---
+
 ## [1.0.0-alpha.3] —— 2026-04-25
 
 ### Changed
@@ -46,6 +96,7 @@
 
 作为 NPS 套件 `v1.0.0-alpha.1` 的一部分首次公开 alpha。
 
+[1.0.0-alpha.4]: https://gitee.com/labacacia/NPS-sdk-go/releases/tag/v1.0.0-alpha.4
 [1.0.0-alpha.3]: https://github.com/LabAcacia/NPS-Dev/releases/tag/v1.0.0-alpha.3
 [1.0.0-alpha.2]: https://github.com/LabAcacia/NPS-Dev/releases/tag/v1.0.0-alpha.2
 [1.0.0-alpha.1]: https://github.com/LabAcacia/NPS-Dev/releases/tag/v1.0.0-alpha.1

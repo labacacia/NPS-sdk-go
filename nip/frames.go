@@ -20,31 +20,62 @@ type IdentFrame struct {
 	PubKey    string
 	Meta      map[string]any
 	Signature *string
+
+	// NPS-RFC-0003 — optional assurance level.
+	AssuranceLevel *AssuranceLevel
+	// NPS-RFC-0002 — optional v2 X.509 dual-trust extensions.
+	// CertFormat is the wire form (CertFormatV1Proprietary | CertFormatV2X509).
+	CertFormat *string
+	// CertChain is base64url(DER), [leaf, intermediates..., root].
+	CertChain []string
 }
 
 func (f *IdentFrame) FrameType() core.FrameType { return core.FrameTypeIdent }
 
-// UnsignedDict returns the dict without the signature field (for signing).
+// UnsignedDict returns the dict the v1 Ed25519 signature covers.
+// Deliberately excludes cert_format / cert_chain so the v1 sig stays
+// covering exactly the same payload as before NPS-RFC-0002.
 func (f *IdentFrame) UnsignedDict() core.FrameDict {
 	d := core.FrameDict{"nid": f.NID, "pub_key": f.PubKey}
-	if f.Meta != nil { d["meta"] = f.Meta }
+	if f.Meta != nil { d["metadata"] = f.Meta }
+	if f.AssuranceLevel != nil { d["assurance_level"] = f.AssuranceLevel.Wire }
 	return d
 }
 
 func (f *IdentFrame) ToDict() core.FrameDict {
 	d := f.UnsignedDict()
-	if f.Signature != nil { d["signature"] = *f.Signature }
+	if f.Signature  != nil { d["signature"]   = *f.Signature }
+	if f.CertFormat != nil { d["cert_format"] = *f.CertFormat }
+	if f.CertChain  != nil { d["cert_chain"]  = f.CertChain }
 	return d
 }
 
 func IdentFrameFromDict(d core.FrameDict) *IdentFrame {
 	var meta map[string]any
-	if v, ok := d["meta"].(map[string]any); ok { meta = v }
+	if v, ok := d["metadata"].(map[string]any); ok { meta = v }
+	var assurance *AssuranceLevel
+	if v, ok := d["assurance_level"].(string); ok {
+		if l, err := AssuranceFromWire(v); err == nil {
+			assurance = &l
+		}
+	}
+	var chain []string
+	switch v := d["cert_chain"].(type) {
+	case []string:
+		chain = v
+	case []any:
+		for _, item := range v {
+			if s, ok := item.(string); ok { chain = append(chain, s) }
+		}
+	}
 	return &IdentFrame{
-		NID:       str(d, "nid"),
-		PubKey:    str(d, "pub_key"),
-		Meta:      meta,
-		Signature: optStr(d, "signature"),
+		NID:            str(d, "nid"),
+		PubKey:         str(d, "pub_key"),
+		Meta:           meta,
+		Signature:      optStr(d, "signature"),
+		AssuranceLevel: assurance,
+		CertFormat:     optStr(d, "cert_format"),
+		CertChain:      chain,
 	}
 }
 
