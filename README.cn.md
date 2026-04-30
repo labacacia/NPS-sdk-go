@@ -1,14 +1,14 @@
 [English Version](./README.md) | 中文版
 
-# NPS Go SDK v1.0.0-alpha.3
+# NPS Go SDK v1.0.0-alpha.4
 
-Neural Protocol Suite (NPS) 的 Go 参考实现 —— 覆盖五个子协议：**NCP · NWP · NIP · NDP · NOP**。
+Neural Protocol Suite (NPS) 的 Go 参考实现 —— 覆盖五个子协议：**NCP · NWP · NIP · NDP · NOP**，外加完整的 NPS-RFC-0002 X.509 + ACME `agent-01` NID 证书原语。
 
 | | |
 |---|---|
 | **Module** | `github.com/labacacia/NPS-sdk-go` |
 | **Go** | 1.25+ |
-| **测试** | 75 通过 |
+| **测试** | 86 通过 |
 | **许可证** | Apache 2.0 |
 
 ---
@@ -20,7 +20,9 @@ Neural Protocol Suite (NPS) 的 Go 参考实现 —— 覆盖五个子协议：*
 | `core` | NCP | 帧类型、帧头编解码、注册表、AnchorFrame 缓存 |
 | `ncp` | NCP | AnchorFrame、DiffFrame、StreamFrame、CapsFrame、HelloFrame、ErrorFrame |
 | `nwp` | NWP | QueryFrame、ActionFrame、NwpClient（HTTP 模式） |
-| `nip` | NIP | IdentFrame、TrustFrame、RevokeFrame、NipIdentity（Ed25519） |
+| `nip` | NIP | IdentFrame（v2 双信任）、TrustFrame、RevokeFrame、NipIdentity（Ed25519）、NipIdentVerifier（RFC-0002 §8.1 双信任）、AssuranceLevel（RFC-0003） |
+| `nip/x509` | NIP / RFC-0002 | `IssueLeaf` / `IssueRoot` / `Verify` —— 基于 stdlib `crypto/x509` 的 NPS X.509 NID 证书 |
+| `nip/acme` | NIP / RFC-0002 | `Client` + `Server`（进程内） + JWS / messages —— ACME `agent-01` 流程 |
 | `ndp` | NDP | AnnounceFrame、ResolveFrame、GraphFrame、InMemoryNdpRegistry、NdpAnnounceValidator |
 | `nop` | NOP | TaskFrame、DelegateFrame、SyncFrame、AlignStreamFrame、NopClient |
 

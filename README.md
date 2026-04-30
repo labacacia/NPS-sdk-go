@@ -1,14 +1,14 @@
 English | [中文版](./README.cn.md)
 
-# NPS Go SDK v1.0.0-alpha.3
+# NPS Go SDK v1.0.0-alpha.4
 
-Go reference implementation of the Neural Protocol Suite (NPS) — covers all five sub-protocols: **NCP · NWP · NIP · NDP · NOP**.
+Go reference implementation of the Neural Protocol Suite (NPS) — covers all five sub-protocols: **NCP · NWP · NIP · NDP · NOP** plus full NPS-RFC-0002 X.509 + ACME `agent-01` NID certificate primitives.
 
 | | |
 |---|---|
 | **Module** | `github.com/labacacia/NPS-sdk-go` |
 | **Go** | 1.25+ |
-| **Tests** | 75 passing |
+| **Tests** | 86 passing |
 | **License** | Apache 2.0 |
 
 ---
@@ -20,7 +20,9 @@ Go reference implementation of the Neural Protocol Suite (NPS) — covers all fi
 | `core` | NCP | Frame types, header codec, registry, AnchorFrame cache |
 | `ncp` | NCP | AnchorFrame, DiffFrame, StreamFrame, CapsFrame, HelloFrame, ErrorFrame |
 | `nwp` | NWP | QueryFrame, ActionFrame, NwpClient (HTTP mode) |
-| `nip` | NIP | IdentFrame, TrustFrame, RevokeFrame, NipIdentity (Ed25519) |
+| `nip` | NIP | IdentFrame (v2 dual-trust), TrustFrame, RevokeFrame, NipIdentity (Ed25519), NipIdentVerifier (RFC-0002 §8.1 dual-trust), AssuranceLevel (RFC-0003) |
+| `nip/x509` | NIP / RFC-0002 | `IssueLeaf` / `IssueRoot` / `Verify` — NPS X.509 NID certificates on stdlib `crypto/x509` |
+| `nip/acme` | NIP / RFC-0002 | `Client` + `Server` (in-process) + JWS / messages — ACME `agent-01` flow |
 | `ndp` | NDP | AnnounceFrame, ResolveFrame, GraphFrame, InMemoryNdpRegistry, NdpAnnounceValidator |
 | `nop` | NOP | TaskFrame, DelegateFrame, SyncFrame, AlignStreamFrame, NopClient |
 
