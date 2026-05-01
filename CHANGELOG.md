@@ -8,6 +8,23 @@ Until NPS reaches v1.0 stable, every repository in the suite is synchronized to 
 
 ---
 
+## [1.0.0-alpha.5] — 2026-05-01
+
+### Added
+
+- **`nwp.ErrAuth*` / `ErrQuery*` / `ErrAction*` / `ErrTask*` / `ErrSubscribe*` / `ErrManifest*` / `ErrTopology*` / `ErrReservedTypeUnsupported`** — new `nwp/error_codes.go` with all 30 NWP wire error code constants. Missing from previous releases.
+- **`ndp.ResolveViaDns` — DNS TXT fallback resolution** — new `(*InMemoryNdpRegistry).ResolveViaDns(ctx, target, lookup)` falls back to `_nps-node.{host}` TXT lookup (NPS-4 §5) when no in-memory entry matches. `DnsTxtLookup` interface + `SystemDnsTxtLookup` (`net.DefaultResolver`); `ParseNpsTxtRecord` + `ExtractHostFromTarget` helpers in `ndp/dns_txt.go`. Tests: 96 → 106.
+
+### Fixed
+
+- **`nip.ErrReputationGossipFork` / `ErrReputationGossipSigInvalid`** — two new NIP reputation gossip error codes added to `nip/error_codes.go` (RFC-0004 Phase 3).
+
+### Changed
+
+- **Version bump to `v1.0.0-alpha.5`** — `README.md` / `README.cn.md` updated; synchronized with NPS suite alpha.5 release.
+
+---
+
 ## [1.0.0-alpha.4] — 2026-04-30
 
 ### Added
@@ -102,6 +119,7 @@ Until NPS reaches v1.0 stable, every repository in the suite is synchronized to 
 
 First public alpha as part of the NPS suite `v1.0.0-alpha.1` release.
 
+[1.0.0-alpha.5]: https://github.com/labacacia/NPS-sdk-go/releases/tag/v1.0.0-alpha.5
 [1.0.0-alpha.4]: https://github.com/labacacia/NPS-sdk-go/releases/tag/v1.0.0-alpha.4
 [1.0.0-alpha.3]: https://github.com/LabAcacia/NPS-Dev/releases/tag/v1.0.0-alpha.3
 [1.0.0-alpha.2]: https://github.com/LabAcacia/NPS-Dev/releases/tag/v1.0.0-alpha.2
