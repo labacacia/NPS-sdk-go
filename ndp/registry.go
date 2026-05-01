@@ -3,6 +3,7 @@
 package ndp
 
 import (
+	"context"
 	"strings"
 	"sync"
 	"time"
@@ -10,9 +11,10 @@ import (
 
 // ResolveResult holds the resolved address details.
 type ResolveResult struct {
-	Host     string
-	Port     uint64
-	Protocol string
+	Host            string
+	Port            uint64
+	Protocol        string
+	CertFingerprint string
 }
 
 type registryEntry struct {
@@ -90,6 +92,41 @@ func (r *InMemoryNdpRegistry) GetAll() []*AnnounceFrame {
 		}
 	}
 	return out
+}
+
+// ResolveViaDns resolves a nwp:// target: first tries the in-memory registry,
+// then falls back to DNS TXT lookup (_nps-node.{host}).
+// If lookup is nil, SystemDnsTxtLookup is used.
+func (r *InMemoryNdpRegistry) ResolveViaDns(ctx context.Context, target string, lookup DnsTxtLookup) *ResolveResult {
+	// 1. Try in-memory registry first.
+	if result := r.Resolve(target); result != nil {
+		return result
+	}
+
+	// 2. Extract hostname from target.
+	host := ExtractHostFromTarget(target)
+	if host == "" {
+		return nil
+	}
+
+	// 3. Fall back to DNS TXT lookup.
+	if lookup == nil {
+		lookup = &SystemDnsTxtLookup{}
+	}
+	records, err := lookup.LookupTXT(ctx, dnsTxtLabelPrefix+host)
+	if err != nil {
+		return nil
+	}
+
+	// 4. Parse each record; return the first valid one.
+	for _, rec := range records {
+		if result := ParseNpsTxtRecord(rec, host); result != nil {
+			return result
+		}
+	}
+
+	// 5. Nothing found.
+	return nil
 }
 
 // NwpTargetMatchesNID matches a nwp://authority/path URL against urn:nps:node:{host}:{path}.
