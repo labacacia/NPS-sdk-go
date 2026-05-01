@@ -21,7 +21,9 @@ func (l AssuranceLevel) MeetsOrExceeds(required AssuranceLevel) bool {
 	return l.Rank >= required.Rank
 }
 
-// AssuranceFromWire parses a wire string. Empty input maps to ANONYMOUS.
+// AssuranceFromWire parses a wire string.  "" → AssuranceAnonymous (backward
+// compat per NPS-RFC-0003 §5.1.1).  Any other unrecognised non-empty value
+// returns an error — callers MUST surface this as NIP-ASSURANCE-UNKNOWN.
 func AssuranceFromWire(wire string) (AssuranceLevel, error) {
 	if wire == "" {
 		return AssuranceAnonymous, nil
