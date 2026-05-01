@@ -3,12 +3,25 @@
 package ndp_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	"github.com/labacacia/NPS-sdk-go/nip"
 	"github.com/labacacia/NPS-sdk-go/ndp"
 )
+
+// ── mockDnsTxtLookup ──────────────────────────────────────────────────────────
+
+type mockDnsTxtLookup struct {
+	records []string
+	called  bool
+}
+
+func (m *mockDnsTxtLookup) LookupTXT(_ context.Context, _ string) ([]string, error) {
+	m.called = true
+	return m.records, nil
+}
 
 // ── AnnounceFrame ─────────────────────────────────────────────────────────────
 
@@ -307,5 +320,133 @@ func TestValidator_KnownPublicKeys(t *testing.T) {
 	}
 	if keys["nid1"] != id.PubKeyString() {
 		t.Error("key value mismatch")
+	}
+}
+
+// ── DNS TXT ───────────────────────────────────────────────────────────────────
+
+func TestParseNpsTxtRecord_Valid(t *testing.T) {
+	txt := "v=nps1 nid=urn:nps:node:api.example.com:products type=memory port=17434"
+	res := ndp.ParseNpsTxtRecord(txt, "api.example.com")
+	if res == nil {
+		t.Fatal("expected non-nil result")
+	}
+	if res.Host != "api.example.com" {
+		t.Errorf("Host = %q, want %q", res.Host, "api.example.com")
+	}
+	if res.Port != 17434 {
+		t.Errorf("Port = %d, want 17434", res.Port)
+	}
+	if res.Protocol != "https" {
+		t.Errorf("Protocol = %q, want https", res.Protocol)
+	}
+}
+
+func TestParseNpsTxtRecord_MissingV(t *testing.T) {
+	txt := "nid=urn:nps:node:api.example.com:products port=17433"
+	res := ndp.ParseNpsTxtRecord(txt, "api.example.com")
+	if res != nil {
+		t.Error("expected nil when v= is absent")
+	}
+}
+
+func TestParseNpsTxtRecord_WrongV(t *testing.T) {
+	txt := "v=nps2 nid=urn:nps:node:api.example.com:products"
+	res := ndp.ParseNpsTxtRecord(txt, "api.example.com")
+	if res != nil {
+		t.Error("expected nil when v != nps1")
+	}
+}
+
+func TestParseNpsTxtRecord_MissingNid(t *testing.T) {
+	txt := "v=nps1 type=memory port=17433"
+	res := ndp.ParseNpsTxtRecord(txt, "api.example.com")
+	if res != nil {
+		t.Error("expected nil when nid is absent")
+	}
+}
+
+func TestParseNpsTxtRecord_DefaultPort(t *testing.T) {
+	txt := "v=nps1 nid=urn:nps:node:api.example.com:products"
+	res := ndp.ParseNpsTxtRecord(txt, "api.example.com")
+	if res == nil {
+		t.Fatal("expected non-nil result")
+	}
+	if res.Port != 17433 {
+		t.Errorf("Port = %d, want 17433 (default)", res.Port)
+	}
+}
+
+func TestParseNpsTxtRecord_WithFingerprint(t *testing.T) {
+	txt := "v=nps1 nid=urn:nps:node:api.example.com:products fp=sha256:a3f9deadbeef"
+	res := ndp.ParseNpsTxtRecord(txt, "api.example.com")
+	if res == nil {
+		t.Fatal("expected non-nil result")
+	}
+	if res.CertFingerprint != "sha256:a3f9deadbeef" {
+		t.Errorf("CertFingerprint = %q, want %q", res.CertFingerprint, "sha256:a3f9deadbeef")
+	}
+}
+
+func TestExtractHostFromTarget(t *testing.T) {
+	cases := []struct {
+		target string
+		want   string
+	}{
+		{"nwp://api.example.com/products", "api.example.com"},
+		{"nwp://api.example.com/products/sub", "api.example.com"},
+		{"nwp://api.example.com", "api.example.com"},
+		{"http://api.example.com/products", ""},
+		{"", ""},
+	}
+	for _, tc := range cases {
+		got := ndp.ExtractHostFromTarget(tc.target)
+		if got != tc.want {
+			t.Errorf("ExtractHostFromTarget(%q) = %q, want %q", tc.target, got, tc.want)
+		}
+	}
+}
+
+func TestResolveViaDns_RegistryHit(t *testing.T) {
+	reg := ndp.NewInMemoryNdpRegistry()
+	reg.Announce(makeAnnounce("urn:nps:node:example.com:agent", 300))
+
+	mock := &mockDnsTxtLookup{records: []string{"v=nps1 nid=urn:nps:node:example.com:agent"}}
+	res := reg.ResolveViaDns(context.Background(), "nwp://example.com/agent", mock)
+	if res == nil {
+		t.Fatal("expected resolve result from registry")
+	}
+	if mock.called {
+		t.Error("DNS lookup should not be called when registry has a hit")
+	}
+}
+
+func TestResolveViaDns_DnsFallback(t *testing.T) {
+	reg := ndp.NewInMemoryNdpRegistry() // empty registry
+
+	txt := "v=nps1 nid=urn:nps:node:api.example.com:products port=17434"
+	mock := &mockDnsTxtLookup{records: []string{txt}}
+	res := reg.ResolveViaDns(context.Background(), "nwp://api.example.com/products", mock)
+	if res == nil {
+		t.Fatal("expected non-nil result from DNS fallback")
+	}
+	if res.Host != "api.example.com" {
+		t.Errorf("Host = %q, want api.example.com", res.Host)
+	}
+	if res.Port != 17434 {
+		t.Errorf("Port = %d, want 17434", res.Port)
+	}
+	if !mock.called {
+		t.Error("DNS lookup should have been called on registry miss")
+	}
+}
+
+func TestResolveViaDns_InvalidTxt(t *testing.T) {
+	reg := ndp.NewInMemoryNdpRegistry()
+
+	mock := &mockDnsTxtLookup{records: []string{"v=nps2 nid=urn:nps:node:api.example.com:products"}}
+	res := reg.ResolveViaDns(context.Background(), "nwp://api.example.com/products", mock)
+	if res != nil {
+		t.Error("expected nil when all TXT records are invalid")
 	}
 }

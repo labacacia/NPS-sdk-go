@@ -8,6 +8,23 @@
 
 ---
 
+## [1.0.0-alpha.5] —— 2026-05-01
+
+### 新增
+
+- **`nwp.ErrAuth*` / `ErrQuery*` / `ErrAction*` / `ErrTask*` / `ErrSubscribe*` / `ErrManifest*` / `ErrTopology*` / `ErrReservedTypeUnsupported`** —— 新增 `nwp/error_codes.go`，包含全部 30 个 NWP wire 错误码常量。此前版本均未提供。
+- **`ndp.ResolveViaDns` —— DNS TXT 回退解析** —— 新增 `(*InMemoryNdpRegistry).ResolveViaDns(ctx, target, lookup)`，当内存注册表无匹配时回退查询 `_nps-node.{host}` TXT 记录（NPS-4 §5）。`DnsTxtLookup` 接口 + `SystemDnsTxtLookup`（`net.DefaultResolver`）；辅助函数 `ParseNpsTxtRecord` + `ExtractHostFromTarget` 位于 `ndp/dns_txt.go`。测试数：96 → 106。
+
+### 修复
+
+- **`nip.ErrReputationGossipFork` / `ErrReputationGossipSigInvalid`** —— 向 `nip/error_codes.go` 新增两个 NIP 声誉 gossip 错误码（RFC-0004 Phase 3）。
+
+### 变更
+
+- **版本升至 `v1.0.0-alpha.5`** —— `README.md` / `README.cn.md` 已更新；与 NPS 套件 alpha.5 同步。
+
+---
+
 ## [1.0.0-alpha.4] —— 2026-04-30
 
 ### 新增
@@ -96,6 +113,7 @@
 
 作为 NPS 套件 `v1.0.0-alpha.1` 的一部分首次公开 alpha。
 
+[1.0.0-alpha.5]: https://github.com/labacacia/NPS-sdk-go/releases/tag/v1.0.0-alpha.5
 [1.0.0-alpha.4]: https://gitee.com/labacacia/NPS-sdk-go/releases/tag/v1.0.0-alpha.4
 [1.0.0-alpha.3]: https://github.com/LabAcacia/NPS-Dev/releases/tag/v1.0.0-alpha.3
 [1.0.0-alpha.2]: https://github.com/LabAcacia/NPS-Dev/releases/tag/v1.0.0-alpha.2
