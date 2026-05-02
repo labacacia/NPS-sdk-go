@@ -17,6 +17,7 @@ Until NPS reaches v1.0 stable, every repository in the suite is synchronized to 
 
 ### Fixed
 
+- **`nip.AssuranceFromWire("")` now returns `AssuranceAnonymous`** — `AssuranceFromWire` previously had no empty-string guard. Fix adds an explicit `if wire == ""` branch returning `AssuranceAnonymous, nil` (NPS-RFC-0003 §5.1.1 backward compat).
 - **`nip.ErrReputationGossipFork` / `ErrReputationGossipSigInvalid`** — two new NIP reputation gossip error codes added to `nip/error_codes.go` (RFC-0004 Phase 3).
 
 ### Changed
