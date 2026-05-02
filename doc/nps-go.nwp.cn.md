@@ -27,7 +27,7 @@ type QueryFrame struct {
     AnchorRef   string        // 必填
     Filter      any           // NPS-2 §4 过滤 DSL（自由形式）
     Order       any           // 如 [{"field":"id","dir":"asc"}]
-    TokenBudget *uint64       // NPT Budget 上限（NPS Token Budget 规范）
+    TokenBudget *uint64       // CGN Budget 上限（Cognon Budget 规范）
     Limit       *uint64
     Offset      *uint64
 }

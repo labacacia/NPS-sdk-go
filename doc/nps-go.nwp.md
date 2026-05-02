@@ -27,7 +27,7 @@ type QueryFrame struct {
     AnchorRef   string        // required
     Filter      any           // NPS-2 §4 filter DSL (free-form)
     Order       any           // e.g. [{"field":"id","dir":"asc"}]
-    TokenBudget *uint64       // NPT Budget cap (NPS Token Budget spec)
+    TokenBudget *uint64       // CGN Budget cap (Cognon Budget spec)
     Limit       *uint64
     Offset      *uint64
 }
