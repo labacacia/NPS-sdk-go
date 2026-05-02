@@ -17,6 +17,7 @@
 
 ### 修复
 
+- **`nip.AssuranceFromWire("")` 现在返回 `AssuranceAnonymous`** —— `AssuranceFromWire` 此前缺少空字符串判断。修复新增显式 `if wire == ""` 分支，返回 `AssuranceAnonymous, nil`（NPS-RFC-0003 §5.1.1 向后兼容）。
 - **`nip.ErrReputationGossipFork` / `ErrReputationGossipSigInvalid`** —— 向 `nip/error_codes.go` 新增两个 NIP 声誉 gossip 错误码（RFC-0004 Phase 3）。
 
 ### 变更
