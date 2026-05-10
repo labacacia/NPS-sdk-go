@@ -23,6 +23,7 @@ Until NPS reaches v1.0 stable, every repository in the suite is synchronized to 
 ### Changed
 
 - **Version bump to `v1.0.0-alpha.5`** — `README.md` / `README.cn.md` updated; synchronized with NPS suite alpha.5 release.
+- **Suite consolidation tracking** — alpha.5.2 tracking-only sub-version folded back into alpha.5 (refs #28). Per the no-sub-versions policy, any per-package sub-patch label is dropped and its content merged into the parent suite version.
 
 ---
 
