@@ -27,10 +27,8 @@ const (
 	ErrAssuranceUnknown  = "NIP-ASSURANCE-UNKNOWN"
 
 	// RFC-0004 (reputation log).
-	ErrReputationEntryInvalid     = "NIP-REPUTATION-ENTRY-INVALID"
-	ErrReputationLogUnreachable   = "NIP-REPUTATION-LOG-UNREACHABLE"
-	ErrReputationGossipFork       = "NIP-REPUTATION-GOSSIP-FORK"
-	ErrReputationGossipSigInvalid = "NIP-REPUTATION-GOSSIP-SIG-INVALID"
+	ErrReputationEntryInvalid   = "NIP-REPUTATION-ENTRY-INVALID"
+	ErrReputationLogUnreachable = "NIP-REPUTATION-LOG-UNREACHABLE"
 
 	// RFC-0002 (X.509 + ACME).
 	ErrCertFormatInvalid       = "NIP-CERT-FORMAT-INVALID"
