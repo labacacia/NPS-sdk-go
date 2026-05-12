@@ -8,6 +8,15 @@
 
 ---
 
+## [1.0.0-alpha.6] —— 2026-05-12
+
+### Changed
+
+- 将 Go SDK 源码与包元数据同步到套件统一版本 `1.0.0-alpha.6`。
+- 对齐 NIP error/OID 常量，并移除当前 SDK API 不再暴露的独立 NWP error-code 表面。
+
+---
+
 ## [1.0.0-alpha.2] —— 2026-04-19
 
 ### Changed
@@ -25,5 +34,6 @@
 
 作为 NPS 套件 `v1.0.0-alpha.1` 的一部分首次公开 alpha。
 
+[1.0.0-alpha.6]: https://github.com/LabAcacia/nps/releases/tag/v1.0.0-alpha.6
 [1.0.0-alpha.2]: https://github.com/LabAcacia/nps/releases/tag/v1.0.0-alpha.2
 [1.0.0-alpha.1]: https://github.com/LabAcacia/nps/releases/tag/v1.0.0-alpha.1
