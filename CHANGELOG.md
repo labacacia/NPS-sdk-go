@@ -8,7 +8,29 @@ Until NPS reaches v1.0 stable, every repository in the suite is synchronized to 
 
 ---
 
-## [1.0.0-alpha.6] — 2026-05-12
+## [1.0.0-alpha.6] — 2026-05-14
+
+### Changed
+
+- **`nip/x509` — IANA PEN 65715 (Breaking, CR-0004)**: All OID constants now use the assigned arc `1.3.6.1.4.1.65715` (replacing provisional `1.3.6.1.4.1.99999`). New `OidIdNpsNodeRoles` (`1.3.6.1.4.1.65715.2.2`) reserved per CR-0004. Certificates issued under the provisional arc must be revoked and re-issued.
+
+- **`nip/error_codes.go` — `ErrReputationGossipFork` / `ErrReputationGossipSigInvalid` removed**: These two constants were premature Phase 3 additions; removed pending the RFC-0004 Phase 3 full specification.
+
+- **Version bump to `v1.0.0-alpha.6`** — synchronized with NPS suite alpha.6 release.
+
+---
+
+## [1.0.0-alpha.5] — 2026-05-01
+
+### Added
+
+- **`nwp.ErrAuth*` / `ErrQuery*` / `ErrAction*` / `ErrTask*` / `ErrSubscribe*` / `ErrManifest*` / `ErrTopology*` / `ErrReservedTypeUnsupported`** — new `nwp/error_codes.go` with all 30 NWP wire error code constants. Missing from previous releases.
+- **`ndp.ResolveViaDns` — DNS TXT fallback resolution** — new `(*InMemoryNdpRegistry).ResolveViaDns(ctx, target, lookup)` falls back to `_nps-node.{host}` TXT lookup (NPS-4 §5) when no in-memory entry matches. `DnsTxtLookup` interface + `SystemDnsTxtLookup` (`net.DefaultResolver`); `ParseNpsTxtRecord` + `ExtractHostFromTarget` helpers in `ndp/dns_txt.go`. Tests: 96 → 106.
+
+### Fixed
+
+- **`nip.AssuranceFromWire("")` now returns `AssuranceAnonymous`** — `AssuranceFromWire` previously had no empty-string guard. Fix adds an explicit `if wire == ""` branch returning `AssuranceAnonymous, nil` (NPS-RFC-0003 §5.1.1 backward compat).
+- **`nip.ErrReputationGossipFork` / `ErrReputationGossipSigInvalid`** — two new NIP reputation gossip error codes added to `nip/error_codes.go` (RFC-0004 Phase 3).
 
 ### Changed
 
