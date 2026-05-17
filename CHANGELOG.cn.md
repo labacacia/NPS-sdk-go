@@ -8,6 +8,20 @@
 
 ---
 
+## [1.0.0-alpha.7] —— 2026-05-17
+
+### 新增
+
+- **`nip.ReputationLogClient`（NPS-RFC-0004 Phase 2）**：完整的声誉日志 operator HTTP 客户端。`GetSnapshot`、`QueryEntries`、`GetSTH`、`GetProof`、`GetGossipSTH`。`VerifyInclusion` 在本地执行 RFC 9162 §2.1.3.2 Merkle audit-path 验证。`SignEntry` / `VerifyEntry` 使用 Ed25519 签名和验证条目。Wire 类型：`ReputationLogEntry`、`SignedTreeHead`、`InclusionProof`。`ReputationLogError` 携带 `Code` + `Status`。`nip/error_codes.go` 新增 `ErrReputationGossipFork` 和 `ErrReputationGossipSigInvalid`。20 条回归测试。
+
+- **`nwp.AnchorNodeClient`（NPS-CR-0002）**：Anchor Node 拓扑查询 HTTP 客户端。`GetSnapshot` 和 `Subscribe`（基于 channel 的 NDJSON 流）。类型化事件：`MemberJoinedEvent`、`MemberLeftEvent`、`MemberUpdatedEvent`、`AnchorStateEvent`、`ResyncRequiredEvent`。`AnchorTopologyError` 处理协议错误。`WithPathPrefix`、`WithHTTPClient` 选项。21 条回归测试。
+
+### 跟随套件
+
+本次跟随 NPS 套件 `v1.0.0-alpha.7`。
+
+---
+
 ## [1.0.0-alpha.6] —— 2026-05-14
 
 ### 变更
@@ -115,6 +129,7 @@
 
 作为 NPS 套件 `v1.0.0-alpha.1` 的一部分首次公开 alpha。
 
+[1.0.0-alpha.7]: https://github.com/labacacia/NPS-sdk-go/releases/tag/v1.0.0-alpha.7
 [1.0.0-alpha.6]: https://github.com/LabAcacia/nps/releases/tag/v1.0.0-alpha.6
 [1.0.0-alpha.2]: https://github.com/LabAcacia/nps/releases/tag/v1.0.0-alpha.2
 [1.0.0-alpha.1]: https://github.com/LabAcacia/nps/releases/tag/v1.0.0-alpha.1
