@@ -1,6 +1,13 @@
 [English Version](./README.md) | 中文版
 
 # NPS Go SDK v1.0.0-alpha.7
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Release](https://img.shields.io/badge/release-v1.0.0--alpha.7-orange.svg)](CHANGELOG.cn.md)
+[![NCP](https://img.shields.io/badge/NCP-v0.6-5b8cff.svg)]()
+[![NWP](https://img.shields.io/badge/NWP-v0.12-4af0b0.svg)]()
+[![NIP](https://img.shields.io/badge/NIP-v0.8-7b61ff.svg)]()
+[![NDP](https://img.shields.io/badge/NDP-v0.7-f0a050.svg)]()
+[![NOP](https://img.shields.io/badge/NOP-v0.5-ff8c42.svg)]()
 
 Neural Protocol Suite (NPS) 的 Go 参考实现 —— 覆盖五个子协议：**NCP · NWP · NIP · NDP · NOP**，外加完整的 NPS-RFC-0002 X.509 + ACME `agent-01` NID 证书原语。Alpha.7 新增 `ReputationLogClient`（RFC-0004 Phase 2）及 25 个 AnchorNodeClient 测试。
 
