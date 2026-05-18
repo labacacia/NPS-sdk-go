@@ -1,8 +1,8 @@
 [English Version](./README.md) | 中文版
 
-# NPS Go SDK v1.0.0-alpha.6
+# NPS Go SDK v1.0.0-alpha.7
 
-Neural Protocol Suite (NPS) 的 Go 参考实现 —— 覆盖五个子协议：**NCP · NWP · NIP · NDP · NOP**，外加完整的 NPS-RFC-0002 X.509 + ACME `agent-01` NID 证书原语。
+Neural Protocol Suite (NPS) 的 Go 参考实现 —— 覆盖五个子协议：**NCP · NWP · NIP · NDP · NOP**，外加完整的 NPS-RFC-0002 X.509 + ACME `agent-01` NID 证书原语。Alpha.7 新增 `ReputationLogClient`（RFC-0004 Phase 2）及 25 个 AnchorNodeClient 测试。
 
 | | |
 |---|---|
