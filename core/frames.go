@@ -25,6 +25,7 @@ const (
 	FrameTypeAnnounce    FrameType = 0x30
 	FrameTypeResolve     FrameType = 0x31
 	FrameTypeGraph       FrameType = 0x32
+	FrameTypeSubscribe   FrameType = 0x12
 	FrameTypeTask        FrameType = 0x40
 	FrameTypeDelegate    FrameType = 0x41
 	FrameTypeSync        FrameType = 0x42
@@ -35,6 +36,7 @@ const (
 var knownFrameTypes = map[FrameType]bool{
 	FrameTypeAnchor: true, FrameTypeDiff: true, FrameTypeStream: true,
 	FrameTypeCaps: true, FrameTypeHello: true, FrameTypeQuery: true, FrameTypeAction: true,
+	FrameTypeSubscribe: true,
 	FrameTypeIdent: true, FrameTypeTrust: true, FrameTypeRevoke: true,
 	FrameTypeAnnounce: true, FrameTypeResolve: true, FrameTypeGraph: true,
 	FrameTypeTask: true, FrameTypeDelegate: true, FrameTypeSync: true,

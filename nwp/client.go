@@ -15,7 +15,11 @@ import (
 	"github.com/labacacia/NPS-sdk-go/ncp"
 )
 
-const contentType = "application/x-nps-frame"
+const (
+	mimeNwpFrame   = "application/nwp-frame"
+	mimeNwpCapsule = "application/nwp-capsule"
+	mimeManifest   = "application/nwp-manifest+json"
+)
 
 // NwpClient is an HTTP-mode NWP client.
 type NwpClient struct {
@@ -39,20 +43,6 @@ func NewNwpClientFull(baseURL string, tier core.EncodingTier, reg *core.FrameReg
 		tier:    tier,
 		http:    httpClient,
 	}
-}
-
-// SendAnchor posts an AnchorFrame to /anchor.
-func (c *NwpClient) SendAnchor(ctx context.Context, frame *ncp.AnchorFrame) error {
-	wire, err := c.codec.Encode(frame.FrameType(), frame.ToDict(), c.tier, true)
-	if err != nil {
-		return err
-	}
-	resp, err := c.post(ctx, c.baseURL+"/anchor", wire)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	return checkOK(resp.StatusCode, "/anchor")
 }
 
 // Query sends a QueryFrame and returns the CapsFrame response.
@@ -151,7 +141,7 @@ func (c *NwpClient) Invoke(ctx context.Context, frame *ActionFrame) (*InvokeResu
 		}
 		return &InvokeResult{Async: AsyncActionResponseFromDict(m)}, nil
 	}
-	if strings.Contains(ct, contentType) {
+	if strings.Contains(ct, mimeNwpFrame) {
 		_, dict, err := c.codec.Decode(body)
 		if err != nil {
 			return nil, err
@@ -165,14 +155,98 @@ func (c *NwpClient) Invoke(ctx context.Context, frame *ActionFrame) (*InvokeResu
 	return &InvokeResult{JSON: m}, nil
 }
 
+// FetchManifest retrieves the node manifest from /.nwm.
+func (c *NwpClient) FetchManifest(ctx context.Context) (map[string]any, error) {
+	return c.getJSON(ctx, c.baseURL+"/.nwm")
+}
+
+// FetchSchema retrieves the node schema from /.schema.
+func (c *NwpClient) FetchSchema(ctx context.Context) (any, error) {
+	return c.getAny(ctx, c.baseURL+"/.schema")
+}
+
+// ListActions retrieves the available actions from /actions.
+func (c *NwpClient) ListActions(ctx context.Context) (any, error) {
+	return c.getAny(ctx, c.baseURL+"/actions")
+}
+
+// Subscribe sends a SubscribeFrame to /subscribe and returns the CapsFrame response.
+func (c *NwpClient) Subscribe(ctx context.Context, frame *SubscribeFrame) (*ncp.CapsFrame, error) {
+	wire, err := c.codec.Encode(frame.FrameType(), frame.ToDict(), c.tier, true)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.post(ctx, c.baseURL+"/subscribe", wire)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if err := checkOK(resp.StatusCode, "/subscribe"); err != nil {
+		return nil, err
+	}
+	body, _ := io.ReadAll(resp.Body)
+	ft, dict, err := c.codec.Decode(body)
+	if err != nil {
+		return nil, err
+	}
+	if ft != core.FrameTypeCaps {
+		return nil, fmt.Errorf("expected CapsFrame, got 0x%02X", ft)
+	}
+	return ncp.CapsFrameFromDict(dict), nil
+}
+
 func (c *NwpClient) post(ctx context.Context, url string, body []byte) (*http.Response, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Content-Type", contentType)
-	req.Header.Set("Accept", contentType)
+	req.Header.Set("Content-Type", mimeNwpFrame)
+	req.Header.Set("Accept", mimeNwpFrame)
 	return c.http.Do(req)
+}
+
+func (c *NwpClient) getJSON(ctx context.Context, url string) (map[string]any, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", mimeManifest)
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if err := checkOK(resp.StatusCode, url); err != nil {
+		return nil, err
+	}
+	body, _ := io.ReadAll(resp.Body)
+	var m map[string]any
+	if err := json.Unmarshal(body, &m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *NwpClient) getAny(ctx context.Context, url string) (any, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/json")
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if err := checkOK(resp.StatusCode, url); err != nil {
+		return nil, err
+	}
+	body, _ := io.ReadAll(resp.Body)
+	var v any
+	if err := json.Unmarshal(body, &v); err != nil {
+		return nil, err
+	}
+	return v, nil
 }
 
 func checkOK(status int, path string) error {
