@@ -35,7 +35,7 @@ type QueryFrame struct {
 	Order       any
 	TokenBudget *uint64
 	Limit       *uint64
-	Offset      *uint64
+	Cursor      string `json:"cursor,omitempty"`
 }
 
 func (f *QueryFrame) FrameType() core.FrameType { return core.FrameTypeQuery }
@@ -46,7 +46,7 @@ func (f *QueryFrame) ToDict() core.FrameDict {
 	if f.Order != nil       { d["order"] = f.Order }
 	if f.TokenBudget != nil { d["token_budget"] = *f.TokenBudget }
 	if f.Limit != nil       { d["limit"] = *f.Limit }
-	if f.Offset != nil      { d["offset"] = *f.Offset }
+	if f.Cursor != ""       { d["cursor"] = f.Cursor }
 	return d
 }
 
@@ -57,35 +57,71 @@ func QueryFrameFromDict(d core.FrameDict) *QueryFrame {
 		Order:       d["order"],
 		TokenBudget: optUint64(d, "token_budget"),
 		Limit:       optUint64(d, "limit"),
-		Offset:      optUint64(d, "offset"),
+		Cursor:      str(d, "cursor"),
 	}
 }
 
 // ── ActionFrame ───────────────────────────────────────────────────────────────
 
 type ActionFrame struct {
-	Action    string
-	Params    any
-	AnchorRef *string
-	Async     bool
+	Action      string
+	Params      any
+	AnchorRef   *string
+	Async       bool
+	CallbackURL string `json:"callback_url,omitempty"`
+	Priority    string `json:"priority,omitempty"`
+	RequestID   string `json:"request_id,omitempty"`
 }
 
 func (f *ActionFrame) FrameType() core.FrameType { return core.FrameTypeAction }
 
 func (f *ActionFrame) ToDict() core.FrameDict {
 	d := core.FrameDict{"action": f.Action, "async": f.Async}
-	if f.Params != nil     { d["params"] = f.Params }
-	if f.AnchorRef != nil  { d["anchor_ref"] = *f.AnchorRef }
+	if f.Params != nil       { d["params"] = f.Params }
+	if f.AnchorRef != nil    { d["anchor_ref"] = *f.AnchorRef }
+	if f.CallbackURL != ""   { d["callback_url"] = f.CallbackURL }
+	if f.Priority != ""      { d["priority"] = f.Priority }
+	if f.RequestID != ""     { d["request_id"] = f.RequestID }
 	return d
 }
 
 func ActionFrameFromDict(d core.FrameDict) *ActionFrame {
 	return &ActionFrame{
-		Action:    str(d, "action"),
-		Params:    d["params"],
-		AnchorRef: optStr(d, "anchor_ref"),
-		Async:     optBool(d, "async"),
+		Action:      str(d, "action"),
+		Params:      d["params"],
+		AnchorRef:   optStr(d, "anchor_ref"),
+		Async:       optBool(d, "async"),
+		CallbackURL: str(d, "callback_url"),
+		Priority:    str(d, "priority"),
+		RequestID:   str(d, "request_id"),
 	}
+}
+
+// ── SubscribeFrame ────────────────────────────────────────────────────────────
+
+type SubscribeFrame struct {
+	Action            string `json:"action"`
+	StreamID          string `json:"stream_id"`
+	AnchorRef         string `json:"anchor_ref,omitempty"`
+	Filter            any    `json:"filter,omitempty"`
+	HeartbeatInterval uint32 `json:"heartbeat_interval,omitempty"`
+	ResumeFromSeq     uint64 `json:"resume_from_seq,omitempty"`
+	Type              string `json:"type,omitempty"`
+}
+
+func (f *SubscribeFrame) FrameType() core.FrameType { return core.FrameTypeSubscribe }
+
+func (f *SubscribeFrame) ToDict() core.FrameDict {
+	d := core.FrameDict{
+		"action":    f.Action,
+		"stream_id": f.StreamID,
+	}
+	if f.AnchorRef != ""         { d["anchor_ref"] = f.AnchorRef }
+	if f.Filter != nil           { d["filter"] = f.Filter }
+	if f.HeartbeatInterval != 0  { d["heartbeat_interval"] = f.HeartbeatInterval }
+	if f.ResumeFromSeq != 0      { d["resume_from_seq"] = f.ResumeFromSeq }
+	if f.Type != ""              { d["type"] = f.Type }
+	return d
 }
 
 // ── AsyncActionResponse ───────────────────────────────────────────────────────

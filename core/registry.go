@@ -31,7 +31,7 @@ func CreateFullRegistry() *FrameRegistry {
 	r := CreateDefaultRegistry()
 	for _, ft := range []FrameType{
 		// NWP
-		FrameTypeQuery, FrameTypeAction,
+		FrameTypeQuery, FrameTypeAction, FrameTypeSubscribe,
 		// NIP
 		FrameTypeIdent, FrameTypeTrust, FrameTypeRevoke,
 		// NDP

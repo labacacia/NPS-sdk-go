@@ -8,6 +8,17 @@
 
 ---
 
+## [1.0.0-alpha.8] —— 2026-05-28
+
+### 套件同步
+
+本版本跟进 NPS 套件 `v1.0.0-alpha.8`。
+
+套件 alpha.8 亮点：.NET SDK 落地 RFC-0005 `ReputationPolicyEvaluator`；
+cgn_limit 预执行拦截；RFC-0002 与 RFC-0005 晋级为 Accepted。
+
+---
+
 ## [1.0.0-alpha.7] —— 2026-05-17
 
 ### 新增
