@@ -66,15 +66,6 @@ type TopologyMember struct {
 	Metadata     map[string]any
 }
 
-type TopologyEvent struct {
-	EventID   string
-	EventType string
-	NodeID    *string
-	AnchorRef *string
-	Timestamp *string
-	Payload   map[string]any
-}
-
 type BridgeNodeSpec struct {
 	BridgeID       string
 	SourceProtocol string
@@ -83,6 +74,52 @@ type BridgeNodeSpec struct {
 	TargetRef      *string
 	Capabilities   []string
 	Metadata       map[string]any
+}
+
+// ── SubscribeFrame ───────────────────────────────────────────────────────────
+
+type SubscribeFrame struct {
+	Action            string
+	StreamID          string
+	AnchorRef         *string
+	Filter            any
+	HeartbeatInterval *uint64
+	ResumeFromSeq     *uint64
+	Type              *string
+}
+
+func (f *SubscribeFrame) FrameType() core.FrameType { return core.FrameTypeSubscribe }
+
+func (f *SubscribeFrame) ToDict() core.FrameDict {
+	d := core.FrameDict{"action": f.Action, "stream_id": f.StreamID}
+	if f.AnchorRef != nil {
+		d["anchor_ref"] = *f.AnchorRef
+	}
+	if f.Filter != nil {
+		d["filter"] = f.Filter
+	}
+	if f.HeartbeatInterval != nil {
+		d["heartbeat_interval"] = *f.HeartbeatInterval
+	}
+	if f.ResumeFromSeq != nil {
+		d["resume_from_seq"] = *f.ResumeFromSeq
+	}
+	if f.Type != nil {
+		d["type"] = *f.Type
+	}
+	return d
+}
+
+func SubscribeFrameFromDict(d core.FrameDict) *SubscribeFrame {
+	return &SubscribeFrame{
+		Action:            str(d, "action"),
+		StreamID:          str(d, "stream_id"),
+		AnchorRef:         optStr(d, "anchor_ref"),
+		Filter:            d["filter"],
+		HeartbeatInterval: optUint64(d, "heartbeat_interval"),
+		ResumeFromSeq:     optUint64(d, "resume_from_seq"),
+		Type:              optStr(d, "type"),
+	}
 }
 
 // ── QueryFrame ────────────────────────────────────────────────────────────────
