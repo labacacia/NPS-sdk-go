@@ -1,15 +1,8 @@
 English | [中文版](./README.cn.md)
 
-# NPS Go SDK v1.0.0-alpha.8
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Release](https://img.shields.io/badge/release-v1.0.0--alpha.8-orange.svg)](CHANGELOG.md)
-[![NCP](https://img.shields.io/badge/NCP-v0.6-5b8cff.svg)]()
-[![NWP](https://img.shields.io/badge/NWP-v0.12-4af0b0.svg)]()
-[![NIP](https://img.shields.io/badge/NIP-v0.8-7b61ff.svg)]()
-[![NDP](https://img.shields.io/badge/NDP-v0.7-f0a050.svg)]()
-[![NOP](https://img.shields.io/badge/NOP-v0.5-ff8c42.svg)]()
+# NPS Go SDK v1.0.0-alpha.11
 
-Go reference implementation of the Neural Protocol Suite (NPS) — covers all five sub-protocols: **NCP · NWP · NIP · NDP · NOP** plus full NPS-RFC-0002 X.509 + ACME `agent-01` NID certificate primitives. Alpha.8 tracks the NPS suite alpha.8 release; RFC-0002 and RFC-0005 promoted to Accepted.
+Go reference implementation of the Neural Protocol Suite (NPS) — covers all five sub-protocols: **NCP · NWP · NIP · NDP · NOP** plus full NPS-RFC-0002 X.509 + ACME `agent-01` NID certificate primitives.
 
 | | |
 |---|---|

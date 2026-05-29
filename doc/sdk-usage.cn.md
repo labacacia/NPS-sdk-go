@@ -4,7 +4,7 @@
 
 > Copyright 2026 INNO LOTUS PTY LTD — 基于 Apache 2.0 授权
 
-**版本**: v1.0.0-alpha.1 | **模块**: `github.com/labacacia/NPS-sdk-go` | **Go**: 1.25+
+**版本**: v1.0.0-alpha.11 | **模块**: `github.com/labacacia/NPS-sdk-go` | **Go**: 1.25+
 
 ---
 

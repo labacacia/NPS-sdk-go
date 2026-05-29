@@ -2,7 +2,7 @@ English | [中文版](./nps-go.ncp.cn.md)
 
 # `github.com/labacacia/NPS-sdk-go/ncp` — Reference
 
-> Spec: [NPS-1 NCP v0.4](https://github.com/labacacia/NPS-Release/blob/main/spec/NPS-1-NCP.md)
+> Spec: [NPS-1 NCP v0.7](https://github.com/labacacia/NPS-Release/blob/main/spec/NPS-1-NCP.md)
 
 The five NCP frame types. Every struct exposes the same trio:
 
