@@ -4,6 +4,35 @@ package nop
 
 import "fmt"
 
+// ── AggregateStrategy ─────────────────────────────────────────────────────────
+
+const (
+	AggregateStrategyMerge          = "merge"
+	AggregateStrategyFirst          = "first"
+	AggregateStrategyWeightedFirstK = "weighted_first_k"
+	AggregateStrategyMergeAll       = "merge_all"
+)
+
+// ── CompensationPolicy ────────────────────────────────────────────────────────
+
+const (
+	CompensationPolicyNone      = "none"
+	CompensationPolicyOnFailure = "on_failure"
+	CompensationPolicyAlways    = "always"
+)
+
+// ── DagNode ───────────────────────────────────────────────────────────────────
+
+// DagNode describes a single node in a NOP task DAG.
+type DagNode struct {
+	Action                  string         `json:"action"`
+	Inputs                  map[string]any `json:"inputs,omitempty"`
+	DependsOn               []string       `json:"depends_on,omitempty"`
+	TargetNID               string         `json:"target_nid,omitempty"`
+	CompensateAction        string         `json:"compensate_action,omitempty"`
+	CompensateParamsMapping map[string]any `json:"compensate_params_mapping,omitempty"`
+}
+
 // ── BackoffStrategy ───────────────────────────────────────────────────────────
 
 type BackoffStrategy int
@@ -36,16 +65,19 @@ func ComputeDelayMs(strategy BackoffStrategy, baseMs, maxMs int64, attempt int) 
 type TaskState string
 
 const (
-	TaskStatePending   TaskState = "pending"
-	TaskStateRunning   TaskState = "running"
-	TaskStateCompleted TaskState = "completed"
-	TaskStateFailed    TaskState = "failed"
-	TaskStateCancelled TaskState = "cancelled"
+	TaskStatePending      TaskState = "pending"
+	TaskStateRunning      TaskState = "running"
+	TaskStateCompleted    TaskState = "completed"
+	TaskStateFailed       TaskState = "failed"
+	TaskStateCancelled    TaskState = "cancelled"
+	TaskStateCompensating TaskState = "compensating"
+	TaskStateCompensated  TaskState = "compensated"
 )
 
 func TaskStateFromString(s string) (TaskState, error) {
 	switch TaskState(s) {
-	case TaskStatePending, TaskStateRunning, TaskStateCompleted, TaskStateFailed, TaskStateCancelled:
+	case TaskStatePending, TaskStateRunning, TaskStateCompleted, TaskStateFailed, TaskStateCancelled,
+		TaskStateCompensating, TaskStateCompensated:
 		return TaskState(s), nil
 	}
 	return "", fmt.Errorf("unknown task state: %s", s)

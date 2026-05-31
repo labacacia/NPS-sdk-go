@@ -55,49 +55,53 @@ func toSliceStr(v any) []string {
 // ── TaskFrame ─────────────────────────────────────────────────────────────────
 
 type TaskFrame struct {
-	TaskID      string
-	DAG         any
-	TimeoutMs   *uint64
-	CallbackURL *string
-	Context     any
-	Priority    *string
-	Depth       *int64
+	TaskID             string
+	DAG                any
+	TimeoutMs          *uint64
+	CallbackURL        *string
+	Context            any
+	Priority           *string
+	Depth              *int64
+	CompensationPolicy string
 }
 
 func (f *TaskFrame) FrameType() core.FrameType { return core.FrameTypeTask }
 
 func (f *TaskFrame) ToDict() core.FrameDict {
 	d := core.FrameDict{"task_id": f.TaskID, "dag": f.DAG}
-	if f.TimeoutMs   != nil { d["timeout_ms"]   = *f.TimeoutMs }
-	if f.CallbackURL != nil { d["callback_url"]  = *f.CallbackURL }
-	if f.Context     != nil { d["context"]       = f.Context }
-	if f.Priority    != nil { d["priority"]      = *f.Priority }
-	if f.Depth       != nil { d["depth"]         = *f.Depth }
+	if f.TimeoutMs          != nil { d["timeout_ms"]         = *f.TimeoutMs }
+	if f.CallbackURL        != nil { d["callback_url"]        = *f.CallbackURL }
+	if f.Context            != nil { d["context"]             = f.Context }
+	if f.Priority           != nil { d["priority"]            = *f.Priority }
+	if f.Depth              != nil { d["depth"]               = *f.Depth }
+	if f.CompensationPolicy != ""  { d["compensation_policy"] = f.CompensationPolicy }
 	return d
 }
 
 func TaskFrameFromDict(d core.FrameDict) *TaskFrame {
 	return &TaskFrame{
-		TaskID:      str(d, "task_id"),
-		DAG:         d["dag"],
-		TimeoutMs:   optUint64(d, "timeout_ms"),
-		CallbackURL: optStr(d, "callback_url"),
-		Context:     d["context"],
-		Priority:    optStr(d, "priority"),
-		Depth:       optInt64(d, "depth"),
+		TaskID:             str(d, "task_id"),
+		DAG:                d["dag"],
+		TimeoutMs:          optUint64(d, "timeout_ms"),
+		CallbackURL:        optStr(d, "callback_url"),
+		Context:            d["context"],
+		Priority:           optStr(d, "priority"),
+		Depth:              optInt64(d, "depth"),
+		CompensationPolicy: str(d, "compensation_policy"),
 	}
 }
 
 // ── DelegateFrame ─────────────────────────────────────────────────────────────
 
 type DelegateFrame struct {
-	TaskID         string
-	SubtaskID      string
-	Action         string
-	TargetNID      string
-	Inputs         any
-	Config         any
-	IdempotencyKey *string
+	TaskID              string
+	SubtaskID           string
+	Action              string
+	TargetNID           string
+	Inputs              any
+	Config              any
+	IdempotencyKey      *string
+	TargetClusterAnchor *string
 }
 
 func (f *DelegateFrame) FrameType() core.FrameType { return core.FrameTypeDelegate }
@@ -109,21 +113,23 @@ func (f *DelegateFrame) ToDict() core.FrameDict {
 		"action":     f.Action,
 		"target_nid": f.TargetNID,
 	}
-	if f.Inputs          != nil { d["inputs"]           = f.Inputs }
-	if f.Config          != nil { d["config"]           = f.Config }
-	if f.IdempotencyKey  != nil { d["idempotency_key"]  = *f.IdempotencyKey }
+	if f.Inputs              != nil { d["inputs"]                = f.Inputs }
+	if f.Config              != nil { d["config"]                = f.Config }
+	if f.IdempotencyKey      != nil { d["idempotency_key"]       = *f.IdempotencyKey }
+	if f.TargetClusterAnchor != nil { d["target_cluster_anchor"] = *f.TargetClusterAnchor }
 	return d
 }
 
 func DelegateFrameFromDict(d core.FrameDict) *DelegateFrame {
 	return &DelegateFrame{
-		TaskID:         str(d, "task_id"),
-		SubtaskID:      str(d, "subtask_id"),
-		Action:         str(d, "action"),
-		TargetNID:      str(d, "target_nid"),
-		Inputs:         d["inputs"],
-		Config:         d["config"],
-		IdempotencyKey: optStr(d, "idempotency_key"),
+		TaskID:              str(d, "task_id"),
+		SubtaskID:           str(d, "subtask_id"),
+		Action:              str(d, "action"),
+		TargetNID:           str(d, "target_nid"),
+		Inputs:              d["inputs"],
+		Config:              d["config"],
+		IdempotencyKey:      optStr(d, "idempotency_key"),
+		TargetClusterAnchor: optStr(d, "target_cluster_anchor"),
 	}
 }
 
@@ -177,6 +183,8 @@ type AlignStreamFrame struct {
 	Result     any
 	Error      map[string]any
 	WindowSize *uint64
+	AckSeq     *uint64
+	NakSeq     *uint64
 }
 
 func (f *AlignStreamFrame) FrameType() core.FrameType { return core.FrameTypeAlignStream }
@@ -205,6 +213,8 @@ func (f *AlignStreamFrame) ToDict() core.FrameDict {
 	if f.Result     != nil { d["result"]      = f.Result }
 	if f.Error      != nil { d["error"]       = f.Error }
 	if f.WindowSize != nil { d["window_size"] = *f.WindowSize }
+	if f.AckSeq     != nil { d["ack_seq"]     = *f.AckSeq }
+	if f.NakSeq     != nil { d["nak_seq"]     = *f.NakSeq }
 	return d
 }
 
@@ -222,5 +232,7 @@ func AlignStreamFrameFromDict(d core.FrameDict) *AlignStreamFrame {
 		Result:     d["result"],
 		Error:      errMap,
 		WindowSize: optUint64(d, "window_size"),
+		AckSeq:     optUint64(d, "ack_seq"),
+		NakSeq:     optUint64(d, "nak_seq"),
 	}
 }

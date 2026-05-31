@@ -155,34 +155,99 @@ func ResolveFrameFromDict(d core.FrameDict) *ResolveFrame {
 
 // ── GraphFrame ────────────────────────────────────────────────────────────────
 
+// GraphNode is a single node entry in a topology snapshot (NPS-4 §5).
+type GraphNode struct {
+	NID           string   `json:"nid"`
+	ClusterAnchor string   `json:"cluster_anchor,omitempty"`
+	NodeRoles     []string `json:"node_roles,omitempty"`
+}
+
+// NdpGraphEdge describes a directional link between two nodes (NPS-4 §5).
+type NdpGraphEdge struct {
+	FromNID   string `json:"from_nid"`
+	ToNID     string `json:"to_nid"`
+	LatencyMs *int   `json:"latency_ms,omitempty"`
+	Protocol  string `json:"protocol,omitempty"`
+}
+
+// GraphFrame is a topology snapshot frame (NPS-4 §5, alpha.11 redesign).
 type GraphFrame struct {
-	Seq         uint64
-	InitialSync bool
-	Nodes       []any
-	Patch       []any
+	GraphID  string         `json:"graph_id"`
+	Nodes    []GraphNode    `json:"nodes"`
+	Edges    []NdpGraphEdge `json:"edges"`
+	TTL      int            `json:"ttl"`
+	Metadata map[string]any `json:"metadata,omitempty"`
 }
 
 func (f *GraphFrame) FrameType() core.FrameType { return core.FrameTypeGraph }
 
 func (f *GraphFrame) ToDict() core.FrameDict {
 	d := core.FrameDict{
-		"seq":          f.Seq,
-		"initial_sync": f.InitialSync,
-		"nodes":        f.Nodes,
+		"graph_id": f.GraphID,
+		"nodes":    f.Nodes,
+		"edges":    f.Edges,
+		"ttl":      f.TTL,
 	}
-	if f.Patch != nil { d["patch"] = f.Patch }
+	if f.Metadata != nil { d["metadata"] = f.Metadata }
 	return d
 }
 
+func graphNodeFromMap(m map[string]any) GraphNode {
+	n := GraphNode{NID: "", ClusterAnchor: "", NodeRoles: nil}
+	if v, ok := m["nid"].(string); ok            { n.NID = v }
+	if v, ok := m["cluster_anchor"].(string); ok { n.ClusterAnchor = v }
+	n.NodeRoles = toSliceStr(m["node_roles"])
+	return n
+}
+
+func ndpGraphEdgeFromMap(m map[string]any) NdpGraphEdge {
+	e := NdpGraphEdge{}
+	if v, ok := m["from_nid"].(string); ok  { e.FromNID = v }
+	if v, ok := m["to_nid"].(string); ok    { e.ToNID = v }
+	if v, ok := m["protocol"].(string); ok  { e.Protocol = v }
+	if v, ok := m["latency_ms"]; ok {
+		switch x := v.(type) {
+		case float64:
+			i := int(x); e.LatencyMs = &i
+		case int:
+			e.LatencyMs = &x
+		case int64:
+			i := int(x); e.LatencyMs = &i
+		}
+	}
+	return e
+}
+
 func GraphFrameFromDict(d core.FrameDict) *GraphFrame {
-	iSync, _ := d["initial_sync"].(bool)
-	var nodes, patch []any
-	if v, ok := d["nodes"].([]any); ok { nodes = v }
-	if v, ok := d["patch"].([]any); ok  { patch = v }
+	var nodes []GraphNode
+	if arr, ok := d["nodes"].([]any); ok {
+		for _, item := range arr {
+			if m, ok := item.(map[string]any); ok {
+				nodes = append(nodes, graphNodeFromMap(m))
+			}
+		}
+	}
+	var edges []NdpGraphEdge
+	if arr, ok := d["edges"].([]any); ok {
+		for _, item := range arr {
+			if m, ok := item.(map[string]any); ok {
+				edges = append(edges, ndpGraphEdgeFromMap(m))
+			}
+		}
+	}
+	var metadata map[string]any
+	if v, ok := d["metadata"].(map[string]any); ok { metadata = v }
+	ttl := 0
+	switch x := d["ttl"].(type) {
+	case float64: ttl = int(x)
+	case int:     ttl = x
+	case int64:   ttl = int(x)
+	}
 	return &GraphFrame{
-		Seq:         toUint64(d["seq"]),
-		InitialSync: iSync,
-		Nodes:       nodes,
-		Patch:       patch,
+		GraphID:  str(d, "graph_id"),
+		Nodes:    nodes,
+		Edges:    edges,
+		TTL:      ttl,
+		Metadata: metadata,
 	}
 }

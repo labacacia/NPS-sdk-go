@@ -13,6 +13,14 @@ func optStr(d core.FrameDict, k string) *string {
 	return nil
 }
 
+// ── IdentReputationPolicyHint ─────────────────────────────────────────────────
+
+// IdentReputationPolicyHint carries optional hints for reputation-log sourcing (alpha.10).
+type IdentReputationPolicyHint struct {
+	LogSources []string `json:"log_sources,omitempty"`
+	Consent    bool     `json:"consent,omitempty"`
+}
+
 // ── IdentFrame ────────────────────────────────────────────────────────────────
 
 type IdentFrame struct {
@@ -28,6 +36,8 @@ type IdentFrame struct {
 	CertFormat *string
 	// CertChain is base64url(DER), [leaf, intermediates..., root].
 	CertChain []string
+	// OCSPStaple is a base64-encoded OCSP response stapled to this identity frame (alpha.11).
+	OCSPStaple string
 }
 
 func (f *IdentFrame) FrameType() core.FrameType { return core.FrameTypeIdent }
@@ -47,6 +57,7 @@ func (f *IdentFrame) ToDict() core.FrameDict {
 	if f.Signature  != nil { d["signature"]   = *f.Signature }
 	if f.CertFormat != nil { d["cert_format"] = *f.CertFormat }
 	if f.CertChain  != nil { d["cert_chain"]  = f.CertChain }
+	if f.OCSPStaple != ""  { d["ocsp_staple"] = f.OCSPStaple }
 	return d
 }
 
@@ -76,6 +87,7 @@ func IdentFrameFromDict(d core.FrameDict) *IdentFrame {
 		AssuranceLevel: assurance,
 		CertFormat:     optStr(d, "cert_format"),
 		CertChain:      chain,
+		OCSPStaple:     str(d, "ocsp_staple"),
 	}
 }
 
