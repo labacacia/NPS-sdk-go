@@ -31,6 +31,18 @@ func optUint64(d core.FrameDict, k string) *uint64 {
 	}
 	return nil
 }
+func optUint32(d core.FrameDict, k string) *uint32 {
+	if v, ok := d[k]; ok {
+		switch n := v.(type) {
+		case float64:
+			u := uint32(n)
+			return &u
+		case uint32:
+			return &n
+		}
+	}
+	return nil
+}
 func optBool(d core.FrameDict, k string) bool {
 	v, _ := d[k].(bool)
 	return v
@@ -76,49 +88,42 @@ type BridgeNodeSpec struct {
 	Metadata       map[string]any
 }
 
-// ── SubscribeFrame ───────────────────────────────────────────────────────────
+// ── SubscribeFrame ────────────────────────────────────────────────────────────
 
 type SubscribeFrame struct {
-	Action            string
-	StreamID          string
-	AnchorRef         *string
-	Filter            any
-	HeartbeatInterval *uint64
-	ResumeFromSeq     *uint64
-	Type              *string
+	SubscriptionID      string
+	Filter              any
+	HeartbeatIntervalMs *uint32
+	MaxEvents           *uint32
+	Cursor              *string
 }
 
 func (f *SubscribeFrame) FrameType() core.FrameType { return core.FrameTypeSubscribe }
 
 func (f *SubscribeFrame) ToDict() core.FrameDict {
-	d := core.FrameDict{"action": f.Action, "stream_id": f.StreamID}
-	if f.AnchorRef != nil {
-		d["anchor_ref"] = *f.AnchorRef
-	}
+	d := core.FrameDict{"subscription_id": f.SubscriptionID}
 	if f.Filter != nil {
 		d["filter"] = f.Filter
 	}
-	if f.HeartbeatInterval != nil {
-		d["heartbeat_interval"] = *f.HeartbeatInterval
+	if f.HeartbeatIntervalMs != nil {
+		d["heartbeat_interval_ms"] = *f.HeartbeatIntervalMs
 	}
-	if f.ResumeFromSeq != nil {
-		d["resume_from_seq"] = *f.ResumeFromSeq
+	if f.MaxEvents != nil {
+		d["max_events"] = *f.MaxEvents
 	}
-	if f.Type != nil {
-		d["type"] = *f.Type
+	if f.Cursor != nil {
+		d["cursor"] = *f.Cursor
 	}
 	return d
 }
 
 func SubscribeFrameFromDict(d core.FrameDict) *SubscribeFrame {
 	return &SubscribeFrame{
-		Action:            str(d, "action"),
-		StreamID:          str(d, "stream_id"),
-		AnchorRef:         optStr(d, "anchor_ref"),
-		Filter:            d["filter"],
-		HeartbeatInterval: optUint64(d, "heartbeat_interval"),
-		ResumeFromSeq:     optUint64(d, "resume_from_seq"),
-		Type:              optStr(d, "type"),
+		SubscriptionID:      str(d, "subscription_id"),
+		Filter:              d["filter"],
+		HeartbeatIntervalMs: optUint32(d, "heartbeat_interval_ms"),
+		MaxEvents:           optUint32(d, "max_events"),
+		Cursor:              optStr(d, "cursor"),
 	}
 }
 
