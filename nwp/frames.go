@@ -293,3 +293,8 @@ func AsyncActionResponseFromDict(d core.FrameDict) *AsyncActionResponse {
 		CallbackURL: optStr(d, "callback_url"),
 	}
 }
+
+// ── NWP v0.14 manifest versioning ─────────────────────────────────────────────
+
+// XNwmVersion is the HTTP response header name carrying the manifest version (NWP v0.14).
+const XNwmVersion = "X-NWM-Version"

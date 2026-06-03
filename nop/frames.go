@@ -63,6 +63,7 @@ type TaskFrame struct {
 	Priority           *string
 	Depth              *int64
 	CompensationPolicy string
+	ResultTtlSeconds   uint64 // NOP v0.7; default 3600
 }
 
 func (f *TaskFrame) FrameType() core.FrameType { return core.FrameTypeTask }
@@ -75,10 +76,15 @@ func (f *TaskFrame) ToDict() core.FrameDict {
 	if f.Priority           != nil { d["priority"]            = *f.Priority }
 	if f.Depth              != nil { d["depth"]               = *f.Depth }
 	if f.CompensationPolicy != ""  { d["compensation_policy"] = f.CompensationPolicy }
+	ttl := f.ResultTtlSeconds
+	if ttl == 0 { ttl = 3600 }
+	d["result_ttl_seconds"] = ttl
 	return d
 }
 
 func TaskFrameFromDict(d core.FrameDict) *TaskFrame {
+	ttl := toUint64(d["result_ttl_seconds"])
+	if ttl == 0 { ttl = 3600 }
 	return &TaskFrame{
 		TaskID:             str(d, "task_id"),
 		DAG:                d["dag"],
@@ -88,6 +94,7 @@ func TaskFrameFromDict(d core.FrameDict) *TaskFrame {
 		Priority:           optStr(d, "priority"),
 		Depth:              optInt64(d, "depth"),
 		CompensationPolicy: str(d, "compensation_policy"),
+		ResultTtlSeconds:   ttl,
 	}
 }
 

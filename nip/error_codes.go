@@ -67,6 +67,9 @@ const (
 
 	// OCSP staple.
 	ErrOcspStapleExpired = "NIP-OCSP-STAPLE-EXPIRED"
+
+	// NIP v0.10 — node_roles.
+	ErrCertNodeRolesMismatch = "NIP-CERT-NODE-ROLES-MISMATCH"
 )
 
 // NipErrorToNpsStatus maps each NIP error code to its NPS status code.
@@ -118,6 +121,7 @@ var NipErrorToNpsStatus = map[string]string{
 	ErrCaJwsInvalid:             core.NpsAuthUnauthenticated,
 	ErrCaJwsExpired:             core.NpsAuthUnauthenticated,
 
-	ErrCertParentRevoked: core.NpsAuthUnauthenticated,
-	ErrOcspStapleExpired: core.NpsAuthUnauthenticated,
+	ErrCertParentRevoked:     core.NpsAuthUnauthenticated,
+	ErrOcspStapleExpired:     core.NpsAuthUnauthenticated,
+	ErrCertNodeRolesMismatch: core.NpsAuthForbidden,
 }

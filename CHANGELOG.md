@@ -8,6 +8,22 @@ Until NPS reaches v1.0 stable, every repository in the suite is synchronized to 
 
 ---
 
+## [1.0.0-alpha.12] — 2026-06-03
+
+### Added
+
+- **NCP v0.8 — `NopFrame` (0x07)**: `FrameTypeNop = 0x07`; `NopFrame` struct; `HelloFrame.PingIntervalMs` (`uint64`, default `0`); `ErrKeepaliveTimeout` / `ErrRekeyRequired` error codes.
+- **NWP v0.14 — manifest versioning**: `XNwmVersion = "X-NWM-Version"` header constant.
+- **NIP v0.10 — `node_roles`**: `IdentFrame.NodeRoles` (`[]string`); `ErrCertNodeRolesMismatch` error code.
+- **NDP v0.9 — spawn schema + heartbeat**: `AnnounceFrame.SpawnSpecRef` changed to `map[string]any`; `AnnounceFrame.HeartbeatIntervalMs` (`uint64`, default `60000`); `ErrAnnounceStale` error code.
+- **NOP v0.7 — result TTL**: `TaskFrame.ResultTtlSeconds` (`uint64`, default `3600`); `ErrTaskResultExpired` / `ErrStreamNakUnresolvable` error codes.
+
+### Tracking the suite
+
+This release tracks NPS suite `v1.0.0-alpha.12`. NCP v0.8 / NWP v0.14 / NIP v0.10 / NDP v0.9 / NOP v0.7.
+
+---
+
 ## [1.0.0-alpha.11] — 2026-05-31
 
 ### Added

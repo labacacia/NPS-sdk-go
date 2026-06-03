@@ -38,6 +38,8 @@ type IdentFrame struct {
 	CertChain []string
 	// OCSPStaple is a base64-encoded OCSP response stapled to this identity frame (alpha.11).
 	OCSPStaple string
+	// NodeRoles is a list of self-declared node-role tags (NIP v0.10 alpha.12).
+	NodeRoles []string
 }
 
 func (f *IdentFrame) FrameType() core.FrameType { return core.FrameTypeIdent }
@@ -58,6 +60,7 @@ func (f *IdentFrame) ToDict() core.FrameDict {
 	if f.CertFormat != nil { d["cert_format"] = *f.CertFormat }
 	if f.CertChain  != nil { d["cert_chain"]  = f.CertChain }
 	if f.OCSPStaple != ""  { d["ocsp_staple"] = f.OCSPStaple }
+	if f.NodeRoles  != nil { d["node_roles"]  = f.NodeRoles }
 	return d
 }
 
@@ -79,6 +82,15 @@ func IdentFrameFromDict(d core.FrameDict) *IdentFrame {
 			if s, ok := item.(string); ok { chain = append(chain, s) }
 		}
 	}
+	var nodeRoles []string
+	switch v := d["node_roles"].(type) {
+	case []string:
+		nodeRoles = v
+	case []any:
+		for _, item := range v {
+			if s, ok := item.(string); ok { nodeRoles = append(nodeRoles, s) }
+		}
+	}
 	return &IdentFrame{
 		NID:            str(d, "nid"),
 		PubKey:         str(d, "pub_key"),
@@ -88,6 +100,7 @@ func IdentFrameFromDict(d core.FrameDict) *IdentFrame {
 		CertFormat:     optStr(d, "cert_format"),
 		CertChain:      chain,
 		OCSPStaple:     str(d, "ocsp_staple"),
+		NodeRoles:      nodeRoles,
 	}
 }
 

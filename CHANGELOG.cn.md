@@ -8,6 +8,22 @@
 
 ---
 
+## [1.0.0-alpha.12] —— 2026-06-03
+
+### 新增
+
+- **NCP v0.8 — `NopFrame`（0x07）**：`FrameTypeNop = 0x07`；`NopFrame` 结构体；`HelloFrame.PingIntervalMs`（默认 `0`）；`ErrKeepaliveTimeout` / `ErrRekeyRequired` 错误码。
+- **NWP v0.14 — manifest 版本化**：`XNwmVersion = "X-NWM-Version"` 响应头常量。
+- **NIP v0.10 — `node_roles`**：`IdentFrame.NodeRoles`（`[]string`）；`ErrCertNodeRolesMismatch` 错误码。
+- **NDP v0.9 — spawn schema + 心跳**：`AnnounceFrame.SpawnSpecRef` 改为 `map[string]any`；`AnnounceFrame.HeartbeatIntervalMs`（默认 `60000`）；`ErrAnnounceStale` 错误码。
+- **NOP v0.7 — 结果 TTL**：`TaskFrame.ResultTtlSeconds`（默认 `3600`）；`ErrTaskResultExpired` / `ErrStreamNakUnresolvable` 错误码。
+
+### 套件同步
+
+本版本跟进 NPS 套件 `v1.0.0-alpha.12`。NCP v0.8 / NWP v0.14 / NIP v0.10 / NDP v0.9 / NOP v0.7。
+
+---
+
 ## [1.0.0-alpha.8] —— 2026-05-28
 
 ### 套件同步

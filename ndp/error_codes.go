@@ -24,6 +24,8 @@ const (
 	ErrGraphInvalid     = "NDP-GRAPH-INVALID"
 	ErrGraphTooLarge    = "NDP-GRAPH-TOO-LARGE"
 	ErrFederationLoop   = "NDP-FEDERATION-LOOP"
+	// v0.9 heartbeat
+	ErrAnnounceStale    = "NDP-ANNOUNCE-STALE"
 )
 
 // NdpErrorToNpsStatus maps each NDP error code to its NPS status code.
@@ -44,4 +46,5 @@ var NdpErrorToNpsStatus = map[string]string{
 	ErrGraphInvalid:             core.NpsClientBadFrame,
 	ErrGraphTooLarge:            core.NpsLimitPayload,
 	ErrFederationLoop:           core.NpsClientConflict,
+	ErrAnnounceStale:            core.NpsClientNotFound,
 }

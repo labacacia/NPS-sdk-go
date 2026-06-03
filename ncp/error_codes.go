@@ -22,7 +22,10 @@ const (
 	ErrStreamWindowOverflow = "NCP-STREAM-WINDOW-OVERFLOW"
 	ErrEncNotNegotiated     = "NCP-ENC-NOT-NEGOTIATED"
 	ErrEncAuthFailed        = "NCP-ENC-AUTH-FAILED"
-	ErrPreambleInvalidCode = "NCP-PREAMBLE-INVALID"
+	ErrPreambleInvalidCode  = "NCP-PREAMBLE-INVALID"
+	// v0.8 keepalive
+	ErrKeepaliveTimeout     = "NCP-KEEPALIVE-TIMEOUT"
+	ErrRekeyRequired        = "NCP-REKEY-REQUIRED"
 )
 
 // NcpErrorToNpsStatus maps each NCP error code to its NPS status code.
@@ -44,4 +47,6 @@ var NcpErrorToNpsStatus = map[string]string{
 	ErrEncNotNegotiated:      core.NpsClientBadFrame,
 	ErrEncAuthFailed:         core.NpsClientBadFrame,
 	ErrPreambleInvalidCode:   core.NpsProtoPreambleInvalid,
+	ErrKeepaliveTimeout:      core.NpsServerTimeout,
+	ErrRekeyRequired:         core.NpsClientBadFrame,
 }

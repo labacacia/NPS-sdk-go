@@ -28,8 +28,11 @@ const (
 	ErrCompensationNotSupported = "NOP-COMPENSATION-NOT-SUPPORTED"
 
 	// Additional codes referenced in task description.
-	ErrStreamNak           = "NOP-STREAM-NAK"
-	ErrCallbackHmacMissing = "NOP-CALLBACK-HMAC-MISSING"
+	ErrStreamNak              = "NOP-STREAM-NAK"
+	ErrCallbackHmacMissing    = "NOP-CALLBACK-HMAC-MISSING"
+	// v0.7
+	ErrTaskResultExpired      = "NOP-TASK-RESULT-EXPIRED"
+	ErrStreamNakUnresolvable  = "NOP-STREAM-NAK-UNRESOLVABLE"
 )
 
 // NopErrorToNpsStatus maps each NOP error code to its NPS status code.
@@ -56,4 +59,6 @@ var NopErrorToNpsStatus = map[string]string{
 	ErrCompensationNotSupported: core.NpsClientUnprocessable,
 	ErrStreamNak:              core.NpsStreamSeqGap,
 	ErrCallbackHmacMissing:    core.NpsAuthUnauthenticated,
+	ErrTaskResultExpired:      core.NpsClientNotFound,
+	ErrStreamNakUnresolvable:  core.NpsStreamSeqGap,
 }

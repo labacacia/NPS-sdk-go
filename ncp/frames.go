@@ -192,6 +192,7 @@ type HelloFrame struct {
 	ExtSupport           bool
 	MaxConcurrentStreams uint64
 	E2eEncAlgorithms     []string // nil when absent
+	PingIntervalMs       uint64   // NCP v0.8; 0 = disabled
 }
 
 const (
@@ -221,6 +222,7 @@ func (f *HelloFrame) ToDict() core.FrameDict {
 	if f.MinVersion != nil          { d["min_version"]        = *f.MinVersion }
 	if f.AgentID != nil             { d["agent_id"]           = *f.AgentID }
 	if f.E2eEncAlgorithms != nil    { d["e2e_enc_algorithms"] = f.E2eEncAlgorithms }
+	if f.PingIntervalMs > 0         { d["ping_interval_ms"]   = f.PingIntervalMs }
 	return d
 }
 
@@ -262,8 +264,20 @@ func HelloFrameFromDict(d core.FrameDict) *HelloFrame {
 	if _, present := d["e2e_enc_algorithms"]; present {
 		f.E2eEncAlgorithms = asStringSlice(d["e2e_enc_algorithms"])
 	}
+	f.PingIntervalMs = toUint64(d["ping_interval_ms"])
 	return f
 }
+
+// ── NopFrame (0x07) ───────────────────────────────────────────────────────────
+
+// NopFrame is a keepalive/heartbeat frame with no payload (NCP v0.8).
+type NopFrame struct{}
+
+func (f *NopFrame) FrameType() core.FrameType { return core.FrameTypeNop }
+
+func (f *NopFrame) ToDict() core.FrameDict { return core.FrameDict{} }
+
+func NopFrameFromDict(_ core.FrameDict) *NopFrame { return &NopFrame{} }
 
 // ── ErrorFrame ────────────────────────────────────────────────────────────────
 

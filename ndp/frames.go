@@ -48,19 +48,20 @@ func toSliceMap(v any) []map[string]any {
 // ── AnnounceFrame ─────────────────────────────────────────────────────────────
 
 type AnnounceFrame struct {
-	NID                string
-	Addresses          []map[string]any
-	Caps               []string
-	TTL                uint64
-	Timestamp          string
-	Signature          string
-	NodeType           *string
-	NodeRoles          []string
-	ClusterAnchor      string
-	SpawnSpecRef       string
-	BridgeProtocols    []string
-	ActivationMode     string
-	ActivationEndpoint string
+	NID                 string
+	Addresses           []map[string]any
+	Caps                []string
+	TTL                 uint64
+	Timestamp           string
+	Signature           string
+	NodeType            *string
+	NodeRoles           []string
+	ClusterAnchor       string
+	SpawnSpecRef        map[string]any // NDP v0.9: structured NdpSpawnSpecRef object
+	BridgeProtocols     []string
+	ActivationMode      string
+	ActivationEndpoint  string
+	HeartbeatIntervalMs uint64 // NDP v0.9; default 60000
 }
 
 func (f *AnnounceFrame) FrameType() core.FrameType { return core.FrameTypeAnnounce }
@@ -82,13 +83,14 @@ func (f *AnnounceFrame) UnsignedDict() core.FrameDict {
 func (f *AnnounceFrame) ToDict() core.FrameDict {
 	d := f.UnsignedDict()
 	d["signature"] = f.Signature
-	if f.NodeType           != nil  { d["node_type"]            = *f.NodeType }
-	if len(f.NodeRoles)     > 0     { d["node_roles"]           = f.NodeRoles }
-	if f.ClusterAnchor      != ""   { d["cluster_anchor"]       = f.ClusterAnchor }
-	if f.SpawnSpecRef       != ""   { d["spawn_spec_ref"]       = f.SpawnSpecRef }
-	if len(f.BridgeProtocols) > 0   { d["bridge_protocols"]    = f.BridgeProtocols }
-	if f.ActivationMode     != ""   { d["activation_mode"]      = f.ActivationMode }
-	if f.ActivationEndpoint != ""   { d["activation_endpoint"]  = f.ActivationEndpoint }
+	if f.NodeType            != nil  { d["node_type"]             = *f.NodeType }
+	if len(f.NodeRoles)      > 0     { d["node_roles"]            = f.NodeRoles }
+	if f.ClusterAnchor       != ""   { d["cluster_anchor"]        = f.ClusterAnchor }
+	if f.SpawnSpecRef        != nil  { d["spawn_spec_ref"]        = f.SpawnSpecRef }
+	if len(f.BridgeProtocols) > 0   { d["bridge_protocols"]      = f.BridgeProtocols }
+	if f.ActivationMode      != ""   { d["activation_mode"]       = f.ActivationMode }
+	if f.ActivationEndpoint  != ""   { d["activation_endpoint"]   = f.ActivationEndpoint }
+	if f.HeartbeatIntervalMs > 0     { d["heartbeat_interval_ms"] = f.HeartbeatIntervalMs }
 	return d
 }
 
@@ -98,20 +100,25 @@ func AnnounceFrameFromDict(d core.FrameDict) *AnnounceFrame {
 	if nodeRoles == nil {
 		nodeRoles = d["node_kind"] // legacy alias
 	}
+	var spawnSpecRef map[string]any
+	if v, ok := d["spawn_spec_ref"].(map[string]any); ok { spawnSpecRef = v }
+	hbMs := toUint64(d["heartbeat_interval_ms"])
+	if hbMs == 0 { hbMs = 60_000 }
 	f := &AnnounceFrame{
-		NID:                str(d, "nid"),
-		Addresses:          toSliceMap(d["addresses"]),
-		Caps:               toSliceStr(d["caps"]),
-		TTL:                toUint64(d["ttl"]),
-		Timestamp:          str(d, "timestamp"),
-		Signature:          str(d, "signature"),
-		NodeType:           optStr(d, "node_type"),
-		NodeRoles:          toSliceStr(nodeRoles),
-		ClusterAnchor:      str(d, "cluster_anchor"),
-		SpawnSpecRef:       str(d, "spawn_spec_ref"),
-		BridgeProtocols:    toSliceStr(d["bridge_protocols"]),
-		ActivationMode:     str(d, "activation_mode"),
-		ActivationEndpoint: str(d, "activation_endpoint"),
+		NID:                 str(d, "nid"),
+		Addresses:           toSliceMap(d["addresses"]),
+		Caps:                toSliceStr(d["caps"]),
+		TTL:                 toUint64(d["ttl"]),
+		Timestamp:           str(d, "timestamp"),
+		Signature:           str(d, "signature"),
+		NodeType:            optStr(d, "node_type"),
+		NodeRoles:           toSliceStr(nodeRoles),
+		ClusterAnchor:       str(d, "cluster_anchor"),
+		SpawnSpecRef:        spawnSpecRef,
+		BridgeProtocols:     toSliceStr(d["bridge_protocols"]),
+		ActivationMode:      str(d, "activation_mode"),
+		ActivationEndpoint:  str(d, "activation_endpoint"),
+		HeartbeatIntervalMs: hbMs,
 	}
 	if f.TTL == 0 { f.TTL = 300 }
 	return f

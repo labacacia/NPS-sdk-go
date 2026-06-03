@@ -17,6 +17,7 @@ const (
 	FrameTypeStream      FrameType = 0x03
 	FrameTypeCaps        FrameType = 0x04
 	FrameTypeHello       FrameType = 0x06
+	FrameTypeNop         FrameType = 0x07 // NCP v0.8 keepalive/heartbeat
 	FrameTypeQuery       FrameType = 0x10
 	FrameTypeAction      FrameType = 0x11
 	FrameTypeIdent       FrameType = 0x20
@@ -35,7 +36,7 @@ const (
 
 var knownFrameTypes = map[FrameType]bool{
 	FrameTypeAnchor: true, FrameTypeDiff: true, FrameTypeStream: true,
-	FrameTypeCaps: true, FrameTypeHello: true, FrameTypeQuery: true, FrameTypeAction: true,
+	FrameTypeCaps: true, FrameTypeHello: true, FrameTypeNop: true, FrameTypeQuery: true, FrameTypeAction: true,
 	FrameTypeSubscribe: true,
 	FrameTypeIdent: true, FrameTypeTrust: true, FrameTypeRevoke: true,
 	FrameTypeAnnounce: true, FrameTypeResolve: true, FrameTypeGraph: true,
