@@ -102,19 +102,25 @@ func TestResolveFrame_Roundtrip(t *testing.T) {
 // ── GraphFrame ────────────────────────────────────────────────────────────────
 
 func TestGraphFrame_Roundtrip(t *testing.T) {
-	nodes := []any{map[string]any{"nid": "n1"}}
-	patch := []any{map[string]any{"op": "add", "nid": "n2"}}
-	f := &ndp.GraphFrame{Seq: 42, InitialSync: true, Nodes: nodes, Patch: patch}
+	// GraphFrame was rewritten to the §5 topology-snapshot format
+	// (graph_id / nodes / edges / ttl); exercise ToDict + FromDict against it.
+	f := &ndp.GraphFrame{GraphID: "g1", TTL: 300}
 	d := f.ToDict()
-	f2 := ndp.GraphFrameFromDict(d)
-	if f2.Seq != 42 {
-		t.Errorf("Seq mismatch")
+	if d["graph_id"] != "g1" || d["ttl"] != 300 {
+		t.Errorf("ToDict mismatch: %+v", d)
 	}
-	if !f2.InitialSync {
-		t.Error("InitialSync should be true")
+	// Reconstruct from the wire shape (nodes/edges arrive as []any of maps).
+	wire := map[string]any{
+		"graph_id": "g1",
+		"ttl":      300,
+		"nodes":    []any{map[string]any{"nid": "n1", "cluster_anchor": "a1"}},
 	}
-	if len(f2.Nodes) != 1 {
-		t.Errorf("Nodes length mismatch")
+	f2 := ndp.GraphFrameFromDict(wire)
+	if f2.GraphID != "g1" {
+		t.Errorf("GraphID mismatch: %q", f2.GraphID)
+	}
+	if len(f2.Nodes) != 1 || f2.Nodes[0].NID != "n1" {
+		t.Errorf("Nodes mismatch: %+v", f2.Nodes)
 	}
 }
 
