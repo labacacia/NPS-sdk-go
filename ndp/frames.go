@@ -62,6 +62,10 @@ type AnnounceFrame struct {
 	ActivationMode      string
 	ActivationEndpoint  string
 	HeartbeatIntervalMs uint64 // NDP v0.9; default 60000
+	// NDP v0.9 liveness — wire-only, NOT part of the signed canonical form
+	// (last_seen updates every heartbeat → must not require re-signing; §3.2.1).
+	Health   string // "healthy" / "degraded" / "draining"
+	LastSeen string // ISO 8601 UTC liveness beat
 }
 
 func (f *AnnounceFrame) FrameType() core.FrameType { return core.FrameTypeAnnounce }
@@ -91,6 +95,8 @@ func (f *AnnounceFrame) ToDict() core.FrameDict {
 	if f.ActivationMode      != ""   { d["activation_mode"]       = f.ActivationMode }
 	if f.ActivationEndpoint  != ""   { d["activation_endpoint"]   = f.ActivationEndpoint }
 	if f.HeartbeatIntervalMs > 0     { d["heartbeat_interval_ms"] = f.HeartbeatIntervalMs }
+	if f.Health              != ""   { d["health"]                = f.Health }
+	if f.LastSeen            != ""   { d["last_seen"]             = f.LastSeen }
 	return d
 }
 
@@ -119,6 +125,8 @@ func AnnounceFrameFromDict(d core.FrameDict) *AnnounceFrame {
 		ActivationMode:      str(d, "activation_mode"),
 		ActivationEndpoint:  str(d, "activation_endpoint"),
 		HeartbeatIntervalMs: hbMs,
+		Health:              str(d, "health"),
+		LastSeen:            str(d, "last_seen"),
 	}
 	if f.TTL == 0 { f.TTL = 300 }
 	return f

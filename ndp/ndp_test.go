@@ -76,6 +76,29 @@ func TestAnnounceFrame_UnsignedDict_NoSignature(t *testing.T) {
 	}
 }
 
+func TestAnnounceFrame_LivenessWireOnly(t *testing.T) {
+	// NDP v0.9 health/last_seen: on the wire, but NOT in the signed canonical form.
+	f := &ndp.AnnounceFrame{
+		NID: "urn:nps:node:x.com:n", Caps: []string{}, Addresses: []map[string]any{},
+		TTL: 300, Timestamp: "t", Health: "draining", LastSeen: "2026-06-13T00:00:00Z",
+	}
+	d := f.ToDict()
+	if d["health"] != "draining" || d["last_seen"] != "2026-06-13T00:00:00Z" {
+		t.Fatalf("ToDict missing liveness fields: %+v", d)
+	}
+	u := f.UnsignedDict()
+	if _, ok := u["health"]; ok {
+		t.Error("UnsignedDict must exclude health")
+	}
+	if _, ok := u["last_seen"]; ok {
+		t.Error("UnsignedDict must exclude last_seen")
+	}
+	f2 := ndp.AnnounceFrameFromDict(d)
+	if f2.Health != "draining" || f2.LastSeen != "2026-06-13T00:00:00Z" {
+		t.Errorf("FromDict did not round-trip liveness: %+v", f2)
+	}
+}
+
 // ── ResolveFrame ──────────────────────────────────────────────────────────────
 
 func TestResolveFrame_Roundtrip(t *testing.T) {
