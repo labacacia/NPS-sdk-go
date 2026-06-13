@@ -4,7 +4,7 @@ English | [中文版](./sdk-usage.cn.md)
 
 > Copyright 2026 INNO LOTUS PTY LTD — Licensed under Apache 2.0
 
-**Version**: v1.0.0-alpha.11 | **Module**: `github.com/labacacia/NPS-sdk-go` | **Go**: 1.25+
+**Version**: v1.0.0-alpha.12 | **Module**: `github.com/labacacia/NPS-sdk-go` | **Go**: 1.25+
 
 ---
 

@@ -30,7 +30,7 @@ imported as `"github.com/labacacia/NPS-sdk-go/{core,ncp,nwp,nip,ndp,nop}"`.
 ## Install
 
 ```bash
-go get github.com/labacacia/NPS-sdk-go@v1.0.0-alpha.11
+go get github.com/labacacia/NPS-sdk-go@v1.0.0-alpha.12
 ```
 
 Runtime dependencies (resolved by `go mod tidy`):

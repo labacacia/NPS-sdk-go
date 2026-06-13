@@ -1,6 +1,6 @@
 English | [中文版](./README.cn.md)
 
-# NPS Go SDK v1.0.0-alpha.11
+# NPS Go SDK v1.0.0-alpha.12
 
 Go reference implementation of the Neural Protocol Suite (NPS) — covers all five sub-protocols: **NCP · NWP · NIP · NDP · NOP** plus full NPS-RFC-0002 X.509 + ACME `agent-01` NID certificate primitives.
 

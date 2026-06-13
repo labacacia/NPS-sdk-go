@@ -1,6 +1,6 @@
 [English Version](./README.md) | 中文版
 
-# NPS Go SDK v1.0.0-alpha.11
+# NPS Go SDK v1.0.0-alpha.12
 
 Neural Protocol Suite (NPS) 的 Go 参考实现 —— 覆盖五个子协议：**NCP · NWP · NIP · NDP · NOP**，外加完整的 NPS-RFC-0002 X.509 + ACME `agent-01` NID 证书原语。
 
