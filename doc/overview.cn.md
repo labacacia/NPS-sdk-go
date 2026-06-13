@@ -30,7 +30,7 @@
 ## 安装
 
 ```bash
-go get github.com/labacacia/NPS-sdk-go@v1.0.0-alpha.12
+go get github.com/labacacia/NPS-sdk-go@v1.0.0-alpha.13
 ```
 
 运行时依赖（由 `go mod tidy` 解析）：

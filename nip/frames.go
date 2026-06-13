@@ -38,7 +38,7 @@ type IdentFrame struct {
 	CertChain []string
 	// OCSPStaple is a base64-encoded OCSP response stapled to this identity frame (alpha.11).
 	OCSPStaple string
-	// NodeRoles is a list of self-declared node-role tags (NIP v0.10 alpha.12).
+	// NodeRoles is a list of self-declared node-role tags (NIP v0.10 alpha.13).
 	NodeRoles []string
 }
 
