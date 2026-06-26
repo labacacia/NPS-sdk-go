@@ -138,18 +138,53 @@ func StreamFrameFromDict(d core.FrameDict) *StreamFrame {
 // ── CapsFrame ─────────────────────────────────────────────────────────────────
 
 type CapsFrame struct {
-	NodeID    string
-	Caps      []string
-	AnchorRef *string
-	Payload   any
+	NodeID        string
+	Caps          []string
+	AnchorRef     *string
+	Count         uint64
+	Data          []any
+	NextCursor    *string
+	TokenEst      *uint64
+	Cached        *bool
+	TokenizerUsed *string
+	Payload       any
 }
 
 func (f *CapsFrame) FrameType() core.FrameType { return core.FrameTypeCaps }
 
 func (f *CapsFrame) ToDict() core.FrameDict {
-	d := core.FrameDict{"node_id": f.NodeID, "caps": f.Caps}
-	if f.AnchorRef != nil { d["anchor_ref"] = *f.AnchorRef }
-	if f.Payload != nil   { d["payload"] = f.Payload }
+	d := core.FrameDict{}
+	if f.NodeID != "" {
+		d["node_id"] = f.NodeID
+	}
+	if len(f.Caps) > 0 {
+		d["caps"] = f.Caps
+	}
+	if f.AnchorRef != nil {
+		d["anchor_ref"] = *f.AnchorRef
+	}
+	if f.Data != nil || f.Count != 0 {
+		d["count"] = f.Count
+		if f.Count == 0 {
+			d["count"] = uint64(len(f.Data))
+		}
+		d["data"] = f.Data
+	}
+	if f.NextCursor != nil {
+		d["next_cursor"] = *f.NextCursor
+	}
+	if f.TokenEst != nil {
+		d["token_est"] = *f.TokenEst
+	}
+	if f.Cached != nil {
+		d["cached"] = *f.Cached
+	}
+	if f.TokenizerUsed != nil {
+		d["tokenizer_used"] = *f.TokenizerUsed
+	}
+	if f.Payload != nil {
+		d["payload"] = f.Payload
+	}
 	return d
 }
 
@@ -166,11 +201,51 @@ func CapsFrameFromDict(d core.FrameDict) *CapsFrame {
 		}
 	}
 	return &CapsFrame{
-		NodeID:    str(d, "node_id"),
-		Caps:      caps,
-		AnchorRef: optStr(d, "anchor_ref"),
-		Payload:   d["payload"],
+		NodeID:        str(d, "node_id"),
+		Caps:          caps,
+		AnchorRef:     optStr(d, "anchor_ref"),
+		Count:         toUint64(d["count"]),
+		Data:          anySlice(d["data"]),
+		NextCursor:    optStr(d, "next_cursor"),
+		TokenEst:      optUint64Ptr(d, "token_est"),
+		Cached:        optBoolPtr(d, "cached"),
+		TokenizerUsed: optStr(d, "tokenizer_used"),
+		Payload:       d["payload"],
 	}
+}
+
+func NewCapsFrame(anchorRef string, data []any) *CapsFrame {
+	return &CapsFrame{
+		AnchorRef: &anchorRef,
+		Count:     uint64(len(data)),
+		Data:      data,
+	}
+}
+
+func anySlice(v any) []any {
+	switch items := v.(type) {
+	case []any:
+		return items
+	case nil:
+		return nil
+	default:
+		return []any{items}
+	}
+}
+
+func optBoolPtr(d core.FrameDict, k string) *bool {
+	if v, ok := d[k].(bool); ok {
+		return &v
+	}
+	return nil
+}
+
+func optUint64Ptr(d core.FrameDict, k string) *uint64 {
+	if v, ok := d[k]; ok {
+		u := toUint64(v)
+		return &u
+	}
+	return nil
 }
 
 // ── HelloFrame ────────────────────────────────────────────────────────────────

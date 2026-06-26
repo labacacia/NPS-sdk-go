@@ -259,7 +259,7 @@ type ActionFrame struct {
 func (f *ActionFrame) FrameType() core.FrameType { return core.FrameTypeAction }
 
 func (f *ActionFrame) ToDict() core.FrameDict {
-	d := core.FrameDict{"action": f.Action, "async": f.Async}
+	d := core.FrameDict{"action_id": f.Action, "action": f.Action, "async": f.Async}
 	if f.Params != nil {
 		d["params"] = f.Params
 	}
@@ -270,8 +270,12 @@ func (f *ActionFrame) ToDict() core.FrameDict {
 }
 
 func ActionFrameFromDict(d core.FrameDict) *ActionFrame {
+	action := str(d, "action_id")
+	if action == "" {
+		action = str(d, "action")
+	}
 	return &ActionFrame{
-		Action:    str(d, "action"),
+		Action:    action,
 		Params:    d["params"],
 		AnchorRef: optStr(d, "anchor_ref"),
 		Async:     optBool(d, "async"),

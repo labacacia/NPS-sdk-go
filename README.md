@@ -2,6 +2,15 @@ English | [中文版](./README.cn.md)
 
 # NPS Go SDK v1.0.0-alpha.13
 
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Release](https://img.shields.io/badge/release-v1.0.0--alpha.13-orange.svg)](CHANGELOG.md)
+[![Next](https://img.shields.io/badge/next-v1.0.0--alpha.14--candidate-yellow.svg)](CHANGELOG.md#100-alpha14--unreleased)
+[![NCP](https://img.shields.io/badge/NCP-v0.8-5b8cff.svg)]()
+[![NWP](https://img.shields.io/badge/NWP-v0.14-4af0b0.svg)]()
+[![NIP](https://img.shields.io/badge/NIP-v0.10-7b61ff.svg)]()
+[![NDP](https://img.shields.io/badge/NDP-v0.9-f0a050.svg)]()
+[![NOP](https://img.shields.io/badge/NOP-v0.7-ff8c42.svg)]()
+
 Go reference implementation of the Neural Protocol Suite (NPS) — covers all five sub-protocols: **NCP · NWP · NIP · NDP · NOP** plus full NPS-RFC-0002 X.509 + ACME `agent-01` NID certificate primitives.
 
 | | |
@@ -11,6 +20,8 @@ Go reference implementation of the Neural Protocol Suite (NPS) — covers all fi
 | **Tests** | 86 passing |
 | **License** | Apache 2.0 |
 
+Alpha.14 candidate additions: typed remote NIP CA client (`nip.NipCaClient`), native-mode NWP serving helper (`nwp.NwpNativeNodeServer`), and TC-N1/TC-N2 conformance manifest helpers (`conformance`).
+
 ---
 
 ## Packages
@@ -19,12 +30,13 @@ Go reference implementation of the Neural Protocol Suite (NPS) — covers all fi
 |---------|----------|-------------|
 | `core` | NCP | Frame types, header codec, registry, AnchorFrame cache |
 | `ncp` | NCP | AnchorFrame, DiffFrame, StreamFrame, CapsFrame, HelloFrame, ErrorFrame |
-| `nwp` | NWP | QueryFrame, ActionFrame, NwpClient (HTTP mode) |
+| `nwp` | NWP | QueryFrame, ActionFrame, NwpClient (HTTP mode), NwpNativeNodeServer |
 | `nip` | NIP | IdentFrame (v2 dual-trust), TrustFrame, RevokeFrame, NipIdentity (Ed25519), NipIdentVerifier (RFC-0002 §8.1 dual-trust), AssuranceLevel (RFC-0003) |
 | `nip/x509` | NIP / RFC-0002 | `IssueLeaf` / `IssueRoot` / `Verify` — NPS X.509 NID certificates on stdlib `crypto/x509` |
 | `nip/acme` | NIP / RFC-0002 | `Client` + `Server` (in-process) + JWS / messages — ACME `agent-01` flow |
 | `ndp` | NDP | AnnounceFrame, ResolveFrame, GraphFrame, InMemoryNdpRegistry, NdpAnnounceValidator |
 | `nop` | NOP | TaskFrame, DelegateFrame, SyncFrame, AlignStreamFrame, NopClient |
+| `conformance` | CI / certification | TC-N1/TC-N2 conformance catalog, manifest builder, and validator |
 
 ---
 
@@ -104,6 +116,28 @@ result, err = client.Invoke(ctx, af)
 fmt.Println(result.Async.TaskID)
 ```
 
+### NWP — Native Serving
+
+```go
+import (
+    "context"
+
+    "github.com/labacacia/NPS-sdk-go/ncp"
+    "github.com/labacacia/NPS-sdk-go/nwp"
+)
+
+server := nwp.NewNwpNativeNodeServer()
+server.QueryHandler = func(ctx context.Context, query *nwp.QueryFrame) (*ncp.CapsFrame, error) {
+    return ncp.NewCapsFrame("native:orders", []any{map[string]any{"id": 42}}), nil
+}
+server.ActionHandler = func(ctx context.Context, action *nwp.ActionFrame) (any, error) {
+    return map[string]any{"action": action.Action}, nil
+}
+
+// `rw` is already past NCP preamble, TLS, and Hello negotiation.
+err := server.Serve(ctx, rw)
+```
+
 ### NIP — Identity & Signing
 
 ```go
@@ -126,6 +160,44 @@ ok = nip.VerifyWithPubKeyStr(payload, "ed25519:<hex>", sig)
 // Save / Load (AES-256-GCM + PBKDF2-SHA256, 600k iterations)
 err = id.Save("/path/to/identity.json", "my-passphrase")
 loaded, err := nip.Load("/path/to/identity.json", "my-passphrase")
+```
+
+### NIP — Remote CA Client
+
+```go
+import "github.com/labacacia/NPS-sdk-go/nip"
+
+ca := nip.NewNipCaClientFull("https://ca.example.com", "/nip", nil)
+discovery, err := ca.GetDiscovery(ctx)
+ident, err := ca.RegisterAgent(ctx, nip.NipCaRegisterRequest{
+    Identifier:   "agent-a",
+    PubKey:       "ed25519:<pub>",
+    Capabilities: []string{"nwp:query"},
+}, "token")
+status, err := ca.VerifyAgent(ctx, ident.NID)
+```
+
+### Conformance Manifest
+
+```go
+import "github.com/labacacia/NPS-sdk-go/conformance"
+
+cases, err := conformance.CatalogForProfile(conformance.NodeL1)
+results := make([]conformance.CaseResult, 0, len(cases))
+for _, c := range cases {
+    results = append(results, conformance.CaseResult{ID: c.ID, Result: "pass"})
+}
+manifest := conformance.NewManifest(
+    conformance.NodeL1,
+    "my-node",
+    "1.0.0-alpha.14",
+    "urn:nps:node:example.com:my-node",
+    "labacacia-fixture",
+    "1.0.0-alpha.14",
+    results,
+    "ci",
+)
+validation := conformance.ValidateManifest(manifest)
 ```
 
 ### NDP — Discovery Registry
