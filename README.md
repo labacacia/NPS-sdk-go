@@ -1,10 +1,10 @@
 English | [中文版](./README.cn.md)
 
-# NPS Go SDK v1.0.0-alpha.14
+# NPS Go SDK v1.0.0-alpha.15
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](../../LICENSE)
-[![Release](https://img.shields.io/badge/release-v1.0.0--alpha.14-orange.svg)](../../CHANGELOG.md)
-[![NCP](https://img.shields.io/badge/NCP-v0.8-5b8cff.svg)]()
+[![Release](https://img.shields.io/badge/release-v1.0.0--alpha.15-orange.svg)](../../CHANGELOG.md)
+[![NCP](https://img.shields.io/badge/NCP-v0.9-5b8cff.svg)]()
 [![NWP](https://img.shields.io/badge/NWP-v0.14-4af0b0.svg)]()
 [![NIP](https://img.shields.io/badge/NIP-v0.10-7b61ff.svg)]()
 [![NDP](https://img.shields.io/badge/NDP-v0.9-f0a050.svg)]()
@@ -19,7 +19,7 @@ Go reference implementation of the Neural Protocol Suite (NPS) — covers all fi
 | **Tests** | 86 passing |
 | **License** | Apache 2.0 |
 
-Alpha.14 candidate additions: typed remote NIP CA client (`nip.NipCaClient`), native-mode NWP serving helper (`nwp.NwpNativeNodeServer`), and TC-N1/TC-N2 conformance manifest helpers (`conformance`).
+Alpha.15 additions: typed remote NIP CA client (`nip.NipCaClient`), native-mode NWP serving helper (`nwp.NwpNativeNodeServer`), and TC-N1/TC-N2 conformance manifest helpers (`conformance`).
 
 ---
 
@@ -189,10 +189,10 @@ for _, c := range cases {
 manifest := conformance.NewManifest(
     conformance.NodeL1,
     "my-node",
-    "1.0.0-alpha.14",
+    "1.0.0-alpha.15",
     "urn:nps:node:example.com:my-node",
     "labacacia-fixture",
-    "1.0.0-alpha.14",
+    "1.0.0-alpha.15",
     results,
     "ci",
 )

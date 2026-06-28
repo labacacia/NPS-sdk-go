@@ -9,11 +9,13 @@ const (
 	ErrResolveNotFound          = "NDP-RESOLVE-NOT-FOUND"
 	ErrResolveAmbiguous         = "NDP-RESOLVE-AMBIGUOUS"
 	ErrResolveTimeout           = "NDP-RESOLVE-TIMEOUT"
+	ErrResolveStale             = "NDP-RESOLVE-STALE"
 	ErrAnnounceSignatureInvalid = "NDP-ANNOUNCE-SIGNATURE-INVALID"
 	ErrAnnounceNidMismatch      = "NDP-ANNOUNCE-NID-MISMATCH"
 	ErrAnnounceRoleRemoved      = "NDP-ANNOUNCE-ROLE-REMOVED"
 	ErrAnnounceRoleUnknown      = "NDP-ANNOUNCE-ROLE-UNKNOWN"
 	ErrAnnounceConflict         = "NDP-ANNOUNCE-CONFLICT"
+	ErrAnnounceProfileViolation = "NDP-ANNOUNCE-PROFILE-VIOLATION"
 	ErrGraphSeqRollback         = "NDP-GRAPH-SEQ-ROLLBACK"
 	ErrGraphSeqGap              = "NDP-GRAPH-SEQ-GAP"
 	ErrIssuerNotAllowed         = "NDP-ISSUER-NOT-ALLOWED"
@@ -21,11 +23,11 @@ const (
 	ErrRegistryUnavailable      = "NDP-REGISTRY-UNAVAILABLE"
 
 	// Additional codes referenced in task description.
-	ErrGraphInvalid     = "NDP-GRAPH-INVALID"
-	ErrGraphTooLarge    = "NDP-GRAPH-TOO-LARGE"
-	ErrFederationLoop   = "NDP-FEDERATION-LOOP"
+	ErrGraphInvalid   = "NDP-GRAPH-INVALID"
+	ErrGraphTooLarge  = "NDP-GRAPH-TOO-LARGE"
+	ErrFederationLoop = "NDP-FEDERATION-LOOP"
 	// v0.9 heartbeat
-	ErrAnnounceStale    = "NDP-ANNOUNCE-STALE"
+	ErrAnnounceStale = "NDP-ANNOUNCE-STALE"
 )
 
 // NdpErrorToNpsStatus maps each NDP error code to its NPS status code.
@@ -33,11 +35,13 @@ var NdpErrorToNpsStatus = map[string]string{
 	ErrResolveNotFound:          core.NpsClientNotFound,
 	ErrResolveAmbiguous:         core.NpsClientConflict,
 	ErrResolveTimeout:           core.NpsServerTimeout,
+	ErrResolveStale:             core.NpsClientNotFound,
 	ErrAnnounceSignatureInvalid: core.NpsAuthUnauthenticated,
 	ErrAnnounceNidMismatch:      core.NpsClientBadFrame,
 	ErrAnnounceRoleRemoved:      core.NpsClientBadFrame,
 	ErrAnnounceRoleUnknown:      core.NpsClientBadFrame,
 	ErrAnnounceConflict:         core.NpsClientConflict,
+	ErrAnnounceProfileViolation: core.NpsAuthForbidden,
 	ErrGraphSeqRollback:         core.NpsClientBadFrame,
 	ErrGraphSeqGap:              core.NpsStreamSeqGap,
 	ErrIssuerNotAllowed:         core.NpsAuthForbidden,

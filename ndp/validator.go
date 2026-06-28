@@ -63,16 +63,16 @@ func (v *NdpAnnounceValidator) Validate(frame *AnnounceFrame) NdpAnnounceResult 
 	v.mu.RUnlock()
 
 	if !ok {
-		return resultFail("NDP-ANNOUNCE-NID-MISMATCH",
+		return resultFail(ErrAnnounceNidMismatch,
 			fmt.Sprintf("no public key registered for NID %s", frame.NID))
 	}
 	if !strings.HasPrefix(frame.Signature, "ed25519:") {
-		return resultFail("NDP-ANNOUNCE-SIG-INVALID", "signature must have ed25519: prefix")
+		return resultFail(ErrAnnounceSignatureInvalid, "signature must have ed25519: prefix")
 	}
 
 	unsigned := frame.UnsignedDict()
 	if nip.VerifyWithPubKeyStr(unsigned, pubKey, frame.Signature) {
 		return resultOK()
 	}
-	return resultFail("NDP-ANNOUNCE-SIG-INVALID", "signature verification failed")
+	return resultFail(ErrAnnounceSignatureInvalid, "signature verification failed")
 }

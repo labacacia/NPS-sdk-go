@@ -25,11 +25,11 @@ import (
 // Covers the 5 verification scenarios documented in the .NET reference.
 
 func TestRegisterX509RoundTrip_VerifierAccepts(t *testing.T) {
-	caNid    := "urn:nps:ca:test"
+	caNid := "urn:nps:org:test"
 	agentNid := "urn:nps:agent:happy:1"
 
-	caPub, caPriv, _    := ed25519.GenerateKey(rand.Reader)
-	agentPub, _, _      := ed25519.GenerateKey(rand.Reader)
+	caPub, caPriv, _ := ed25519.GenerateKey(rand.Reader)
+	agentPub, _, _ := ed25519.GenerateKey(rand.Reader)
 
 	root := mustIssueRoot(t, caPriv, caNid, big.NewInt(1))
 	leaf := mustIssueLeaf(t, agentNid, agentPub, caPriv, caNid,
@@ -52,11 +52,11 @@ func TestRegisterX509RoundTrip_VerifierAccepts(t *testing.T) {
 }
 
 func TestRegisterX509_LeafEkuStripped_RejectsEkuMissing(t *testing.T) {
-	caNid    := "urn:nps:ca:test"
+	caNid := "urn:nps:org:test"
 	agentNid := "urn:nps:agent:eku-stripped:1"
 
-	caPub, caPriv, _   := ed25519.GenerateKey(rand.Reader)
-	agentPub, _, _     := ed25519.GenerateKey(rand.Reader)
+	caPub, caPriv, _ := ed25519.GenerateKey(rand.Reader)
+	agentPub, _, _ := ed25519.GenerateKey(rand.Reader)
 
 	root := mustIssueRoot(t, caPriv, caNid, big.NewInt(1))
 	tampered := buildLeafWithoutEku(t, agentNid, agentPub, caPriv, caNid, big.NewInt(99))
@@ -83,12 +83,12 @@ func TestRegisterX509_LeafEkuStripped_RejectsEkuMissing(t *testing.T) {
 }
 
 func TestRegisterX509_LeafForDifferentNid_RejectsSubjectMismatch(t *testing.T) {
-	caNid     := "urn:nps:ca:test"
+	caNid := "urn:nps:org:test"
 	victimNid := "urn:nps:agent:victim:1"
 	forgedNid := "urn:nps:agent:attacker:9"
 
-	caPub, caPriv, _   := ed25519.GenerateKey(rand.Reader)
-	agentPub, _, _     := ed25519.GenerateKey(rand.Reader)
+	caPub, caPriv, _ := ed25519.GenerateKey(rand.Reader)
+	agentPub, _, _ := ed25519.GenerateKey(rand.Reader)
 
 	root := mustIssueRoot(t, caPriv, caNid, big.NewInt(1))
 	// Issue a leaf whose CN/SAN are the *forged* NID, but splice it into a frame
@@ -118,11 +118,11 @@ func TestRegisterX509_LeafForDifferentNid_RejectsSubjectMismatch(t *testing.T) {
 }
 
 func TestV1OnlyVerifier_AcceptsV2FrameByIgnoringChain(t *testing.T) {
-	caNid    := "urn:nps:ca:test"
+	caNid := "urn:nps:org:test"
 	agentNid := "urn:nps:agent:v1-compat:1"
 
-	caPub, caPriv, _   := ed25519.GenerateKey(rand.Reader)
-	agentPub, _, _     := ed25519.GenerateKey(rand.Reader)
+	caPub, caPriv, _ := ed25519.GenerateKey(rand.Reader)
+	agentPub, _, _ := ed25519.GenerateKey(rand.Reader)
 
 	root := mustIssueRoot(t, caPriv, caNid, big.NewInt(1))
 	leaf := mustIssueLeaf(t, agentNid, agentPub, caPriv, caNid,
@@ -144,11 +144,11 @@ func TestV1OnlyVerifier_AcceptsV2FrameByIgnoringChain(t *testing.T) {
 }
 
 func TestV2Verifier_RejectsV2FrameWhenTrustedRootsMissing(t *testing.T) {
-	caNid    := "urn:nps:ca:test"
+	caNid := "urn:nps:org:test"
 	agentNid := "urn:nps:agent:wrong-trust:1"
 
-	caPub, caPriv, _   := ed25519.GenerateKey(rand.Reader)
-	agentPub, _, _     := ed25519.GenerateKey(rand.Reader)
+	caPub, caPriv, _ := ed25519.GenerateKey(rand.Reader)
+	agentPub, _, _ := ed25519.GenerateKey(rand.Reader)
 
 	root := mustIssueRoot(t, caPriv, caNid, big.NewInt(1))
 	leaf := mustIssueLeaf(t, agentNid, agentPub, caPriv, caNid,
@@ -158,7 +158,7 @@ func TestV2Verifier_RejectsV2FrameWhenTrustedRootsMissing(t *testing.T) {
 
 	// Different unrelated CA root — chain won't anchor.
 	_, otherCaPriv, _ := ed25519.GenerateKey(rand.Reader)
-	otherRoot := mustIssueRoot(t, otherCaPriv, "urn:nps:ca:other", big.NewInt(1))
+	otherRoot := mustIssueRoot(t, otherCaPriv, "urn:nps:org:other", big.NewInt(1))
 
 	verifier := npsnip.NewNipIdentVerifier(
 		npsnip.VerifierOptions{
@@ -219,7 +219,7 @@ func mustIssueLeaf(t *testing.T, nid string, subjectPub ed25519.PublicKey,
 		SubjectNID: nid, SubjectPublicKey: subjectPub,
 		CAPrivateKey: caPriv, IssuerNID: caNid, Role: role,
 		AssuranceLevel: level,
-		NotBefore: now.Add(-time.Minute), NotAfter: now.Add(30 * 24 * time.Hour),
+		NotBefore:      now.Add(-time.Minute), NotAfter: now.Add(30 * 24 * time.Hour),
 		SerialNumber: serial,
 	})
 	if err != nil {

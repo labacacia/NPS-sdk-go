@@ -38,7 +38,7 @@ var knownFrameTypes = map[FrameType]bool{
 	FrameTypeAnchor: true, FrameTypeDiff: true, FrameTypeStream: true,
 	FrameTypeCaps: true, FrameTypeHello: true, FrameTypeNop: true, FrameTypeQuery: true, FrameTypeAction: true,
 	FrameTypeSubscribe: true,
-	FrameTypeIdent: true, FrameTypeTrust: true, FrameTypeRevoke: true,
+	FrameTypeIdent:     true, FrameTypeTrust: true, FrameTypeRevoke: true,
 	FrameTypeAnnounce: true, FrameTypeResolve: true, FrameTypeGraph: true,
 	FrameTypeTask: true, FrameTypeDelegate: true, FrameTypeSync: true,
 	FrameTypeAlignStream: true, FrameTypeError: true,
@@ -57,8 +57,9 @@ func FrameTypeFromByte(b byte) (FrameType, error) {
 type EncodingTier uint8
 
 const (
-	EncodingTierJSON    EncodingTier = 0
-	EncodingTierMsgPack EncodingTier = 1
+	EncodingTierJSON         EncodingTier = 0
+	EncodingTierMsgPack      EncodingTier = 1
+	EncodingTierBinaryVector EncodingTier = 2
 )
 
 // ── FrameHeader ────────────────────────────────────────────────────────────────
@@ -70,9 +71,11 @@ const (
 //
 // Flags:
 //
-//	bit 7 (0x80) — TIER: 0=JSON, 1=MsgPack
-//	bit 6 (0x40) — FINAL: 1=last frame in stream
-//	bit 0 (0x01) — EXT: 1=8-byte extended header
+//	bits 0-1 (0x03) — TIER: 0=JSON, 1=MsgPack, 2=BinaryVector
+//	bit 2  (0x04) — FINAL: 1=last frame in stream
+//	bit 3  (0x08) — ENC: encrypted payload
+//	bits 4-6       — reserved
+//	bit 7  (0x80) — EXT: 1=8-byte extended header
 type FrameHeader struct {
 	FrameType     FrameType
 	Flags         uint8
@@ -82,27 +85,21 @@ type FrameHeader struct {
 
 func NewFrameHeader(ft FrameType, tier EncodingTier, isFinal bool, payloadLen uint64) FrameHeader {
 	isExt := payloadLen > 0xFFFF
-	var flags uint8
-	if tier == EncodingTierMsgPack {
-		flags |= 0x80
-	}
+	flags := uint8(tier) & 0x03
 	if isFinal {
-		flags |= 0x40
+		flags |= 0x04
 	}
 	if isExt {
-		flags |= 0x01
+		flags |= 0x80
 	}
 	return FrameHeader{FrameType: ft, Flags: flags, PayloadLength: payloadLen, IsExtended: isExt}
 }
 
 func (h FrameHeader) EncodingTier() EncodingTier {
-	if h.Flags&0x80 != 0 {
-		return EncodingTierMsgPack
-	}
-	return EncodingTierJSON
+	return EncodingTier(h.Flags & 0x03)
 }
 
-func (h FrameHeader) IsFinal() bool { return h.Flags&0x40 != 0 }
+func (h FrameHeader) IsFinal() bool { return h.Flags&0x04 != 0 }
 
 func (h FrameHeader) HeaderSize() int {
 	if h.IsExtended {
@@ -135,7 +132,7 @@ func ParseFrameHeader(wire []byte) (FrameHeader, error) {
 		return FrameHeader{}, err
 	}
 	flags := wire[1]
-	isExt := flags&0x01 != 0
+	isExt := flags&0x80 != 0
 	if isExt {
 		if len(wire) < 8 {
 			return FrameHeader{}, fmt.Errorf("buffer too small for extended header")

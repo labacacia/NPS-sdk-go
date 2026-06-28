@@ -20,11 +20,12 @@ type NativeActionHandler func(context.Context, *ActionFrame) (any, error)
 // only reads complete NPS frames, dispatches QueryFrame/ActionFrame, and writes
 // response frames.
 type NwpNativeNodeServer struct {
-	Codec         *core.NpsFrameCodec
-	Tier          core.EncodingTier
-	AnchorRef     string
-	QueryHandler  NativeQueryHandler
-	ActionHandler NativeActionHandler
+	Codec            *core.NpsFrameCodec
+	Tier             core.EncodingTier
+	EnabledEncodings []string
+	AnchorRef        string
+	QueryHandler     NativeQueryHandler
+	ActionHandler    NativeActionHandler
 }
 
 func NewNwpNativeNodeServer() *NwpNativeNodeServer {
@@ -36,13 +37,25 @@ func NewNwpNativeNodeServer() *NwpNativeNodeServer {
 }
 
 func (s *NwpNativeNodeServer) DispatchWire(ctx context.Context, wire []byte) ([]byte, error) {
-	if s.Codec == nil {
-		s.Codec = core.NewNpsFrameCodec(core.CreateFullRegistry())
+	codec := s.Codec
+	if codec == nil {
+		codec = core.NewNpsFrameCodec(core.CreateFullRegistry())
 	}
-	if s.Tier != core.EncodingTierJSON && s.Tier != core.EncodingTierMsgPack {
-		s.Tier = core.EncodingTierMsgPack
+	tier := s.Tier
+	if tier != core.EncodingTierJSON && tier != core.EncodingTierMsgPack {
+		tier = core.EncodingTierMsgPack
 	}
-	ft, dict, err := s.Codec.Decode(wire)
+	enabled := s.enabledEncodings(tier)
+	if hdr, err := core.PeekHeader(wire); err != nil {
+		return codec.Encode(core.FrameTypeError, nativeError("NPS-SERVER-INTERNAL", "NWP-NATIVE-DECODE-FAILED", err.Error()), tier, true)
+	} else if !encodingAllowed(hdr, tier, enabled) {
+		return codec.Encode(core.FrameTypeError, nativeError(
+			core.NpsServerEncodingUnsupported,
+			ncp.ErrEncodingUnsupported,
+			fmt.Sprintf("Frame type 0x%02X used %s, but the negotiated policy allows %v.", hdr.FrameType, encodingToken(hdr.EncodingTier()), enabled),
+		), tier, true)
+	}
+	ft, dict, err := codec.Decode(wire)
 	var outType core.FrameType
 	var out core.FrameDict
 	if err != nil {
@@ -50,7 +63,7 @@ func (s *NwpNativeNodeServer) DispatchWire(ctx context.Context, wire []byte) ([]
 	} else {
 		outType, out = s.Dispatch(ctx, ft, dict)
 	}
-	return s.Codec.Encode(outType, out, s.Tier, true)
+	return codec.Encode(outType, out, tier, true)
 }
 
 func (s *NwpNativeNodeServer) Dispatch(ctx context.Context, ft core.FrameType, dict core.FrameDict) (core.FrameType, core.FrameDict) {
@@ -117,13 +130,51 @@ func (s *NwpNativeNodeServer) anchorRef() string {
 	return s.AnchorRef
 }
 
+func (s *NwpNativeNodeServer) enabledEncodings(defaultTier core.EncodingTier) []string {
+	if len(s.EnabledEncodings) > 0 {
+		return s.EnabledEncodings
+	}
+	return []string{encodingToken(defaultTier)}
+}
+
+func encodingAllowed(hdr core.FrameHeader, defaultTier core.EncodingTier, enabled []string) bool {
+	if hdr.EncodingTier() == defaultTier {
+		return true
+	}
+	return hdr.EncodingTier() == core.EncodingTierBinaryVector &&
+		hdr.FrameType == core.FrameTypeQuery &&
+		containsEncoding(enabled, "binary_vector.v1")
+}
+
+func containsEncoding(enabled []string, token string) bool {
+	for _, enc := range enabled {
+		if enc == token {
+			return true
+		}
+	}
+	return false
+}
+
+func encodingToken(tier core.EncodingTier) string {
+	switch tier {
+	case core.EncodingTierJSON:
+		return "json"
+	case core.EncodingTierMsgPack:
+		return "msgpack"
+	case core.EncodingTierBinaryVector:
+		return "binary_vector.v1"
+	default:
+		return fmt.Sprintf("unknown:%d", tier)
+	}
+}
+
 func readNativeWireFrame(r io.Reader) ([]byte, error) {
 	header := make([]byte, 4)
 	if _, err := io.ReadFull(r, header); err != nil {
 		return nil, err
 	}
 	raw := append([]byte{}, header...)
-	if header[1]&0x01 != 0 {
+	if header[1]&0x80 != 0 {
 		rest := make([]byte, 4)
 		if _, err := io.ReadFull(r, rest); err != nil {
 			return nil, err

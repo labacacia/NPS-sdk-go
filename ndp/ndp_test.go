@@ -4,11 +4,12 @@ package ndp_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/labacacia/NPS-sdk-go/nip"
 	"github.com/labacacia/NPS-sdk-go/ndp"
+	"github.com/labacacia/NPS-sdk-go/nip"
 )
 
 // ── mockDnsTxtLookup ──────────────────────────────────────────────────────────
@@ -37,6 +38,12 @@ func TestAnnounceFrame_Roundtrip(t *testing.T) {
 		NodeType:  &nodeType,
 	}
 	d := f.ToDict()
+	if _, ok := d["capabilities"]; !ok {
+		t.Fatalf("ToDict must emit canonical capabilities field: %+v", d)
+	}
+	if _, ok := d["caps"]; ok {
+		t.Fatalf("ToDict must not emit legacy caps field: %+v", d)
+	}
 	f2 := ndp.AnnounceFrameFromDict(d)
 	if f2.NID != f.NID {
 		t.Errorf("NID mismatch")
@@ -65,14 +72,74 @@ func TestAnnounceFrame_DefaultTTL(t *testing.T) {
 	}
 }
 
+func TestAnnounceFrame_FromDictCapabilities(t *testing.T) {
+	f := ndp.AnnounceFrameFromDict(map[string]any{
+		"nid":          "urn:nps:node:x.com:n",
+		"addresses":    []any{},
+		"capabilities": []any{"nwp:query"},
+		"ttl":          300,
+		"timestamp":    "t",
+		"signature":    "ed25519:s",
+	})
+	if len(f.Caps) != 1 || f.Caps[0] != "nwp:query" {
+		t.Fatalf("expected capabilities to parse, got %+v", f.Caps)
+	}
+}
+
 func TestAnnounceFrame_UnsignedDict_NoSignature(t *testing.T) {
 	f := &ndp.AnnounceFrame{
 		NID: "urn:nps:node:x.com:n", Caps: []string{},
-		Addresses: []map[string]any{}, TTL: 300, Timestamp: "t",
+		Addresses: []map[string]any{}, TTL: 300, Timestamp: "t", HeartbeatIntervalMs: 60_000,
 	}
 	d := f.UnsignedDict()
 	if _, ok := d["signature"]; ok {
 		t.Error("UnsignedDict should not contain 'signature'")
+	}
+	if _, ok := d["node_type"]; ok {
+		t.Error("UnsignedDict should omit null node_type")
+	}
+	if _, ok := d["frame"]; ok {
+		t.Error("UnsignedDict should not contain frame discriminant")
+	}
+	if d["heartbeat_interval_ms"] != uint64(60_000) {
+		t.Fatalf("UnsignedDict should include default heartbeat_interval_ms, got %+v", d)
+	}
+}
+
+func TestAnnounceFrame_HeartbeatZeroCanonicalizesLiterally(t *testing.T) {
+	f := &ndp.AnnounceFrame{
+		NID: "urn:nps:node:x.com:n", Caps: []string{},
+		Addresses: []map[string]any{}, TTL: 300, Timestamp: "t", HeartbeatIntervalMs: 0,
+	}
+	if got := f.UnsignedDict()["heartbeat_interval_ms"]; got != uint64(0) {
+		t.Fatalf("explicit heartbeat_interval_ms=0 must be signed literally, got %v", got)
+	}
+}
+
+func TestAnnounceFrame_FromDictAbsentHeartbeatDefaults(t *testing.T) {
+	f := ndp.AnnounceFrameFromDict(map[string]any{
+		"nid":          "urn:nps:node:x.com:n",
+		"addresses":    []any{},
+		"capabilities": []any{},
+		"ttl":          300,
+		"timestamp":    "t",
+		"signature":    "ed25519:s",
+	})
+	if f.HeartbeatIntervalMs != 60_000 {
+		t.Fatalf("absent heartbeat_interval_ms should default to 60000, got %d", f.HeartbeatIntervalMs)
+	}
+
+	explicitZero := ndp.AnnounceFrameFromDict(map[string]any{
+		"nid":                   "urn:nps:node:x.com:n",
+		"addresses":             []any{},
+		"capabilities":          []any{},
+		"ttl":                   300,
+		"timestamp":             "t",
+		"signature":             "ed25519:s",
+		"heartbeat_interval_ms": uint64(0),
+	})
+	if explicitZero.HeartbeatIntervalMs != 0 {
+		t.Fatalf("explicit heartbeat_interval_ms=0 should round-trip literally, got %d", explicitZero.HeartbeatIntervalMs)
 	}
 }
 
@@ -96,6 +163,30 @@ func TestAnnounceFrame_LivenessWireOnly(t *testing.T) {
 	f2 := ndp.AnnounceFrameFromDict(d)
 	if f2.Health != "draining" || f2.LastSeen != "2026-06-13T00:00:00Z" {
 		t.Errorf("FromDict did not round-trip liveness: %+v", f2)
+	}
+}
+
+func TestAnnounceFrame_ActivationEndpointIsAddressObject(t *testing.T) {
+	endpoint := map[string]any{"host": "10.0.0.5", "port": uint64(17440), "protocol": "nwp"}
+	f := &ndp.AnnounceFrame{
+		NID: "urn:nps:node:x.com:n", Caps: []string{}, Addresses: []map[string]any{},
+		TTL: 300, Timestamp: "t", Signature: "ed25519:s",
+		ActivationMode: "resident", ActivationEndpoint: endpoint,
+	}
+	d := f.ToDict()
+	got, ok := d["activation_endpoint"].(map[string]any)
+	if !ok {
+		t.Fatalf("activation_endpoint must be an address object, got %+v", d["activation_endpoint"])
+	}
+	if got["host"] != "10.0.0.5" || got["protocol"] != "nwp" {
+		t.Fatalf("unexpected activation_endpoint: %+v", got)
+	}
+	if _, ok := f.UnsignedDict()["activation_endpoint"].(map[string]any); !ok {
+		t.Fatalf("UnsignedDict must include activation_endpoint: %+v", f.UnsignedDict())
+	}
+	f2 := ndp.AnnounceFrameFromDict(d)
+	if f2.ActivationEndpoint["host"] != "10.0.0.5" {
+		t.Fatalf("FromDict did not round-trip activation_endpoint: %+v", f2.ActivationEndpoint)
 	}
 }
 
@@ -125,7 +216,7 @@ func TestResolveFrame_Roundtrip(t *testing.T) {
 // ── GraphFrame ────────────────────────────────────────────────────────────────
 
 func TestGraphFrame_Roundtrip(t *testing.T) {
-	// GraphFrame was rewritten to the §5 topology-snapshot format
+	// GraphFrame was rewritten to the §3.3 topology-snapshot format
 	// (graph_id / nodes / edges / ttl); exercise ToDict + FromDict against it.
 	f := &ndp.GraphFrame{GraphID: "g1", TTL: 300}
 	d := f.ToDict()
@@ -144,6 +235,57 @@ func TestGraphFrame_Roundtrip(t *testing.T) {
 	}
 	if len(f2.Nodes) != 1 || f2.Nodes[0].NID != "n1" {
 		t.Errorf("Nodes mismatch: %+v", f2.Nodes)
+	}
+}
+
+func TestGraphFrame_ValidateRejectsTooLarge(t *testing.T) {
+	nodes := make([]ndp.GraphNode, 257)
+	for i := range nodes {
+		nodes[i] = ndp.GraphNode{NID: "urn:nps:node:example.com:n"}
+	}
+	err := (&ndp.GraphFrame{GraphID: "too-big", Nodes: nodes, Edges: nil, TTL: 60}).Validate()
+	if err == nil || !strings.Contains(err.Error(), ndp.ErrGraphTooLarge) {
+		t.Fatalf("want %s error, got %v", ndp.ErrGraphTooLarge, err)
+	}
+}
+
+func TestGraphFrame_ValidateRejectsInvalidEdges(t *testing.T) {
+	nodes := []ndp.GraphNode{{NID: "urn:nps:node:example.com:a"}}
+	cases := []ndp.NdpGraphEdge{
+		{FromNID: nodes[0].NID, ToNID: nodes[0].NID},
+		{FromNID: nodes[0].NID, ToNID: "urn:nps:node:example.com:missing"},
+	}
+	for _, edge := range cases {
+		err := (&ndp.GraphFrame{GraphID: "bad-edge", Nodes: nodes, Edges: []ndp.NdpGraphEdge{edge}, TTL: 60}).Validate()
+		if err == nil || !strings.Contains(err.Error(), ndp.ErrGraphInvalid) {
+			t.Fatalf("want %s error, got %v", ndp.ErrGraphInvalid, err)
+		}
+	}
+}
+
+func TestFederationForwardedBy(t *testing.T) {
+	header := "urn:nps:agent:registry-a.example.com:r1, urn:nps:agent:registry-b.example.com:r2"
+	hops := ndp.ParseForwardedBy(header)
+	if len(hops) != 2 || hops[0] != "urn:nps:agent:registry-a.example.com:r1" {
+		t.Fatalf("unexpected hops: %#v", hops)
+	}
+
+	next, ok, err := ndp.AppendForwardedBy("urn:nps:agent:registry-c.example.com:r3", header)
+	if err != nil || !ok || !strings.Contains(next, "registry-c") {
+		t.Fatalf("append failed: next=%q ok=%v err=%v", next, ok, err)
+	}
+
+	_, ok, err = ndp.AppendForwardedBy("urn:nps:agent:registry-b.example.com:r2", header)
+	if err == nil || ok || !strings.Contains(err.Error(), ndp.ErrFederationLoop) {
+		t.Fatalf("want loop error, ok=%v err=%v", ok, err)
+	}
+
+	_, ok, err = ndp.AppendForwardedBy(
+		"urn:nps:agent:registry-d.example.com:r4",
+		header+", urn:nps:agent:registry-c.example.com:r3",
+	)
+	if err != nil || ok {
+		t.Fatalf("want silent hop-limit drop, ok=%v err=%v", ok, err)
 	}
 }
 
@@ -320,7 +462,7 @@ func TestValidator_BadSignaturePrefix(t *testing.T) {
 	if result.IsValid {
 		t.Error("should be invalid for non-ed25519 signature prefix")
 	}
-	if result.ErrorCode != "NDP-ANNOUNCE-SIG-INVALID" {
+	if result.ErrorCode != "NDP-ANNOUNCE-SIGNATURE-INVALID" {
 		t.Errorf("wrong error code: %s", result.ErrorCode)
 	}
 }

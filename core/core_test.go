@@ -3,6 +3,14 @@
 package core_test
 
 import (
+	"encoding/binary"
+	"encoding/hex"
+	"encoding/json"
+	"math"
+	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -112,6 +120,20 @@ func TestFrameHeader_ExtendedRoundtrip(t *testing.T) {
 	}
 }
 
+func TestFrameHeader_BinaryVectorTier(t *testing.T) {
+	hdr := core.NewFrameHeader(core.FrameTypeQuery, core.EncodingTierBinaryVector, true, 42)
+	if hdr.EncodingTier() != core.EncodingTierBinaryVector {
+		t.Fatalf("expected BinaryVector tier, got %d", hdr.EncodingTier())
+	}
+	if !hdr.IsFinal() {
+		t.Fatal("expected final flag")
+	}
+	wire := hdr.ToBytes()
+	if wire[1] != 0x06 {
+		t.Fatalf("expected flags 0x06 (BinaryVector|FINAL), got 0x%02X", wire[1])
+	}
+}
+
 func TestFrameHeader_TooShort(t *testing.T) {
 	_, err := core.ParseFrameHeader([]byte{0x01, 0x40})
 	if err == nil {
@@ -193,6 +215,135 @@ func TestCodec_MsgPackRoundtrip(t *testing.T) {
 	}
 	if got["node_id"] != "n1" {
 		t.Errorf("node_id mismatch: got %v", got["node_id"])
+	}
+}
+
+func TestCodec_BinaryVectorRoundtrip(t *testing.T) {
+	reg := core.CreateFullRegistry()
+	codec := core.NewNpsFrameCodec(reg)
+	dict := core.FrameDict{
+		"anchor_ref": "sha256:" + "a000000000000000000000000000000000000000000000000000000000000000",
+		"limit":      uint64(3),
+		"vector_search": core.FrameDict{
+			"field":  "embedding",
+			"vector": []float32{0.25, -1.5, 3.0},
+			"top_k":  uint64(2),
+			"metric": "cosine",
+		},
+	}
+
+	wire, err := codec.Encode(core.FrameTypeQuery, dict, core.EncodingTierBinaryVector, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hdr, err := core.PeekHeader(wire)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hdr.EncodingTier() != core.EncodingTierBinaryVector {
+		t.Fatalf("expected BinaryVector tier, got %d", hdr.EncodingTier())
+	}
+	if string(wire[hdr.HeaderSize():hdr.HeaderSize()+4]) != "NPBV" {
+		t.Fatalf("expected BinaryVector payload magic")
+	}
+
+	ft, got, err := codec.Decode(wire)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ft != core.FrameTypeQuery {
+		t.Fatalf("frame type mismatch: got 0x%02X", ft)
+	}
+	vs := got["vector_search"].(core.FrameDict)
+	vector := vs["vector"].([]float32)
+	if len(vector) != 3 || vector[0] != 0.25 || vector[1] != -1.5 || vector[2] != 3.0 {
+		t.Fatalf("vector mismatch: %#v", vector)
+	}
+}
+
+func TestCodec_BinaryVectorRejectsNonFiniteSegmentValue(t *testing.T) {
+	reg := core.CreateFullRegistry()
+	codec := core.NewNpsFrameCodec(reg)
+	dict := core.FrameDict{
+		"anchor_ref": "sha256:" + "a000000000000000000000000000000000000000000000000000000000000000",
+		"vector_search": core.FrameDict{
+			"field":  "embedding",
+			"vector": []float32{0.25, -1.5, 3.0},
+			"top_k":  uint64(2),
+			"metric": "cosine",
+		},
+	}
+
+	wire, err := codec.Encode(core.FrameTypeQuery, dict, core.EncodingTierBinaryVector, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hdr, err := core.PeekHeader(wire)
+	if err != nil {
+		t.Fatal(err)
+	}
+	payloadStart := hdr.HeaderSize()
+	metadataLen := int(binary.BigEndian.Uint32(wire[payloadStart+8 : payloadStart+12]))
+	valueOffset := payloadStart + 16 + metadataLen + 4
+	binary.LittleEndian.PutUint32(wire[valueOffset:valueOffset+4], math.Float32bits(float32(math.NaN())))
+
+	_, _, err = codec.Decode(wire)
+	if err == nil {
+		t.Fatal("expected NaN payload to fail")
+	}
+	if !strings.Contains(err.Error(), "finite float32") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestCodec_BinaryVectorConformanceFixture(t *testing.T) {
+	type fixtureVector struct {
+		Kind  string `json:"kind"`
+		Input struct {
+			PayloadHex string `json:"payload_hex"`
+		} `json:"input"`
+	}
+	type fixtureFile struct {
+		Vectors []fixtureVector `json:"vectors"`
+	}
+
+	_, current, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller failed")
+	}
+	path := filepath.Join(filepath.Dir(current), "../../../spec/conformance/ncp/binary_vector_payload_vectors.json")
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fixture fixtureFile
+	if err := json.Unmarshal(raw, &fixture); err != nil {
+		t.Fatal(err)
+	}
+
+	codec := core.NewNpsFrameCodec(core.CreateFullRegistry())
+	for _, vector := range fixture.Vectors {
+		payload, err := hex.DecodeString(vector.Input.PayloadHex)
+		if err != nil {
+			t.Fatal(err)
+		}
+		hdr := core.NewFrameHeader(core.FrameTypeQuery, core.EncodingTierBinaryVector, true, uint64(len(payload)))
+		wire := append(hdr.ToBytes(), payload...)
+		_, got, err := codec.Decode(wire)
+		if vector.Kind == "negative" {
+			if err == nil {
+				t.Fatalf("expected negative fixture to fail")
+			}
+			continue
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		vs := got["vector_search"].(core.FrameDict)
+		decoded := vs["vector"].([]float32)
+		if len(decoded) != 3 || decoded[0] != 0.25 || decoded[1] != -1.5 || decoded[2] != 3.0 {
+			t.Fatalf("fixture vector mismatch: %#v", decoded)
+		}
 	}
 }
 

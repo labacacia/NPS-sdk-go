@@ -68,7 +68,7 @@ func TestAnchorManifest(t *testing.T) {
 	opt.DisplayName = "Svc"
 	opt.CgnLimit = 500
 	opt.ReputationPolicy = &ReputationPolicy{Enabled: false, LogSources: []string{"https://log"}}
-	opt.TrustAnchors = []string{"urn:nps:ca:root"}
+	opt.TrustAnchors = []string{"urn:nps:org:root"}
 	app := NewAnchorNodeApp(opt, AnchorNodeAppDeps{})
 	srv := httptest.NewServer(app)
 	defer srv.Close()
@@ -96,7 +96,7 @@ func TestAnchorManifest(t *testing.T) {
 	if _, ok := m["reputation_policy"]; ok {
 		t.Fatal("disabled reputation policy should be omitted")
 	}
-	if m["trust_anchors"].([]any)[0] != "urn:nps:ca:root" {
+	if m["trust_anchors"].([]any)[0] != "urn:nps:org:root" {
 		t.Fatal("trust anchors")
 	}
 }

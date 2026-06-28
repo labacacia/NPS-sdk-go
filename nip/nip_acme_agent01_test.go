@@ -23,32 +23,38 @@ import (
 // End-to-end agent-01 round-trip plus tampered-signature negative path.
 
 type acmeFixture struct {
-	caNid    string
-	agentNid string
-	caRoot   *cryptox509.Certificate
-	agentPub ed25519.PublicKey
+	caNid     string
+	agentNid  string
+	caRoot    *cryptox509.Certificate
+	agentPub  ed25519.PublicKey
 	agentPriv ed25519.PrivateKey
-	server   *acme.Server
+	server    *acme.Server
 }
 
 func newAcmeFixture(t *testing.T) *acmeFixture {
 	t.Helper()
-	caNid    := "urn:nps:ca:acme-test"
+	caNid := "urn:nps:org:acme-test"
 	agentNid := "urn:nps:agent:acme-test:1"
 
 	_, caPriv, err := ed25519.GenerateKey(rand.Reader)
-	if err != nil { t.Fatalf("ca keygen: %v", err) }
+	if err != nil {
+		t.Fatalf("ca keygen: %v", err)
+	}
 
 	caRoot := mustIssueRoot(t, caPriv, caNid, big.NewInt(1))
 
 	agentPub, agentPriv, err := ed25519.GenerateKey(rand.Reader)
-	if err != nil { t.Fatalf("agent keygen: %v", err) }
+	if err != nil {
+		t.Fatalf("agent keygen: %v", err)
+	}
 
 	srv := acme.NewServer(acme.ServerOptions{
 		CaNid: caNid, CaKey: caPriv, CaRootCert: caRoot,
 		CertValidity: 30 * 24 * time.Hour,
 	})
-	if err := srv.Start(); err != nil { t.Fatalf("server start: %v", err) }
+	if err := srv.Start(); err != nil {
+		t.Fatalf("server start: %v", err)
+	}
 	t.Cleanup(func() { _ = srv.Close() })
 
 	return &acmeFixture{
@@ -91,12 +97,16 @@ func TestRespondAgent01_TamperedSignature_ServerReturnsChallengeFailed(t *testin
 
 	// newAccount.
 	jwk, err := acme.JwkFromPublicKey(fx.agentPub)
-	if err != nil { t.Fatalf("jwk: %v", err) }
+	if err != nil {
+		t.Fatalf("jwk: %v", err)
+	}
 	acctEnv, err := acme.Sign(
 		acme.ProtectedHeader{Alg: acme.AlgEdDSA, Nonce: nonce, URL: dir.NewAccount, JWK: jwk},
 		acme.NewAccountPayload{TermsOfServiceAgreed: true},
 		fx.agentPriv)
-	if err != nil { t.Fatalf("sign acct: %v", err) }
+	if err != nil {
+		t.Fatalf("sign acct: %v", err)
+	}
 	acctResp, acctNonce := postJoseExpect(t, httpClient, dir.NewAccount, acctEnv, 201)
 	accountUrl := acctResp.Header.Get("Location")
 	nonce = acctNonce
@@ -106,7 +116,9 @@ func TestRespondAgent01_TamperedSignature_ServerReturnsChallengeFailed(t *testin
 		acme.ProtectedHeader{Alg: acme.AlgEdDSA, Nonce: nonce, URL: dir.NewOrder, Kid: accountUrl},
 		acme.NewOrderPayload{Identifiers: []acme.Identifier{{Type: acme.IdentifierTypeNID, Value: fx.agentNid}}},
 		fx.agentPriv)
-	if err != nil { t.Fatalf("sign order: %v", err) }
+	if err != nil {
+		t.Fatalf("sign order: %v", err)
+	}
 	orderHTTP, orderNonce := postJoseExpect(t, httpClient, dir.NewOrder, orderEnv, 201)
 	var order acme.Order
 	mustDecodeJSON(t, orderHTTP, &order)
@@ -116,7 +128,9 @@ func TestRespondAgent01_TamperedSignature_ServerReturnsChallengeFailed(t *testin
 	authzEnv, err := acme.Sign(
 		acme.ProtectedHeader{Alg: acme.AlgEdDSA, Nonce: nonce, URL: order.Authorizations[0], Kid: accountUrl},
 		nil, fx.agentPriv)
-	if err != nil { t.Fatalf("sign authz: %v", err) }
+	if err != nil {
+		t.Fatalf("sign authz: %v", err)
+	}
 	authzHTTP, authzNonce := postJoseExpect(t, httpClient, order.Authorizations[0], authzEnv, 200)
 	var authz acme.Authorization
 	mustDecodeJSON(t, authzHTTP, &authz)
@@ -129,27 +143,35 @@ func TestRespondAgent01_TamperedSignature_ServerReturnsChallengeFailed(t *testin
 			break
 		}
 	}
-	if ch == nil { t.Fatalf("authz missing agent-01 challenge") }
+	if ch == nil {
+		t.Fatalf("authz missing agent-01 challenge")
+	}
 
 	// ★ Tampered: sign challenge token with a *different* keypair, but submit
 	//   the JWS envelope under the registered account's key. The server verifies
 	//   the JWS sig (passes with account key) and then verifies the agent
 	//   signature against the same account key (fails).
 	_, forgerPriv, err := ed25519.GenerateKey(rand.Reader)
-	if err != nil { t.Fatalf("forger keygen: %v", err) }
+	if err != nil {
+		t.Fatalf("forger keygen: %v", err)
+	}
 	forgedSig := ed25519.Sign(forgerPriv, []byte(ch.Token))
 
 	chEnv, err := acme.Sign(
 		acme.ProtectedHeader{Alg: acme.AlgEdDSA, Nonce: nonce, URL: ch.URL, Kid: accountUrl},
 		acme.ChallengeRespondPayload{AgentSignature: acme.B64uEncode(forgedSig)},
 		fx.agentPriv)
-	if err != nil { t.Fatalf("sign challenge: %v", err) }
+	if err != nil {
+		t.Fatalf("sign challenge: %v", err)
+	}
 
 	body, _ := json.Marshal(chEnv)
 	req, _ := http.NewRequest("POST", ch.URL, bytes.NewReader(body))
 	req.Header.Set("Content-Type", acme.ContentTypeJoseJSON)
 	resp, err := httpClient.Do(req)
-	if err != nil { t.Fatalf("POST challenge: %v", err) }
+	if err != nil {
+		t.Fatalf("POST challenge: %v", err)
+	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 400 {
@@ -170,9 +192,13 @@ func TestRespondAgent01_TamperedSignature_ServerReturnsChallengeFailed(t *testin
 func getDirectory(t *testing.T, c *http.Client, url string) *acme.Directory {
 	t.Helper()
 	resp, err := c.Get(url)
-	if err != nil { t.Fatalf("GET directory: %v", err) }
+	if err != nil {
+		t.Fatalf("GET directory: %v", err)
+	}
 	defer resp.Body.Close()
-	if resp.StatusCode != 200 { t.Fatalf("directory HTTP %d", resp.StatusCode) }
+	if resp.StatusCode != 200 {
+		t.Fatalf("directory HTTP %d", resp.StatusCode)
+	}
 	var dir acme.Directory
 	if err := json.NewDecoder(resp.Body).Decode(&dir); err != nil {
 		t.Fatalf("decode dir: %v", err)
@@ -184,10 +210,14 @@ func getNonce(t *testing.T, c *http.Client, url string) string {
 	t.Helper()
 	req, _ := http.NewRequest("HEAD", url, nil)
 	resp, err := c.Do(req)
-	if err != nil { t.Fatalf("HEAD newNonce: %v", err) }
+	if err != nil {
+		t.Fatalf("HEAD newNonce: %v", err)
+	}
 	defer resp.Body.Close()
 	n := resp.Header.Get("Replay-Nonce")
-	if n == "" { t.Fatalf("server omitted Replay-Nonce") }
+	if n == "" {
+		t.Fatalf("server omitted Replay-Nonce")
+	}
 	return n
 }
 
@@ -197,7 +227,9 @@ func postJoseExpect(t *testing.T, c *http.Client, url string, env *acme.Envelope
 	req, _ := http.NewRequest("POST", url, bytes.NewReader(body))
 	req.Header.Set("Content-Type", acme.ContentTypeJoseJSON)
 	resp, err := c.Do(req)
-	if err != nil { t.Fatalf("POST %s: %v", url, err) }
+	if err != nil {
+		t.Fatalf("POST %s: %v", url, err)
+	}
 	if resp.StatusCode != want {
 		body, _ := io.ReadAll(resp.Body)
 		resp.Body.Close()

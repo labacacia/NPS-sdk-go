@@ -70,6 +70,8 @@ func encodePayload(dict FrameDict, tier EncodingTier) ([]byte, error) {
 		return json.Marshal(dict)
 	case EncodingTierMsgPack:
 		return msgpack.Marshal(dict)
+	case EncodingTierBinaryVector:
+		return encodeBinaryVector(dict)
 	default:
 		return nil, &ErrCodec{Msg: fmt.Sprintf("unknown encoding tier %d", tier)}
 	}
@@ -85,6 +87,12 @@ func decodePayload(payload []byte, tier EncodingTier) (FrameDict, error) {
 	case EncodingTierMsgPack:
 		if err := msgpack.Unmarshal(payload, &dict); err != nil {
 			return nil, &ErrCodec{Msg: err.Error()}
+		}
+	case EncodingTierBinaryVector:
+		var err error
+		dict, err = decodeBinaryVector(payload)
+		if err != nil {
+			return nil, err
 		}
 	default:
 		return nil, &ErrCodec{Msg: fmt.Sprintf("unknown encoding tier %d", tier)}

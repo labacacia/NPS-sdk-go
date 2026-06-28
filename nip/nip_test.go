@@ -178,38 +178,96 @@ func TestIdentFrame_UnsignedDict_NoSignature(t *testing.T) {
 }
 
 func TestTrustFrame_Roundtrip(t *testing.T) {
-	exp := "2026-12-31T00:00:00Z"
-	sig := "ed25519:xyz"
 	f := &nip.TrustFrame{
-		IssuerNID:  "urn:nps:node:issuer.com:ca",
-		SubjectNID: "urn:nps:node:agent.com:a1",
-		Scopes:     []string{"read", "write"},
-		ExpiresAt:  &exp,
-		Signature:  &sig,
+		GrantorNID: "urn:nps:org:org-a.com",
+		GranteeCA:  "urn:nps:org:org-b.com",
+		TrustScope: []string{"nwp:query", "nwp:action"},
+		Nodes:      []string{"nwp://api.org-a.com/public/**"},
+		IssuedAt:   "2026-05-11T00:00:00Z",
+		ExpiresAt:  "2026-12-31T00:00:00Z",
+		Serial:     "00000000000A3F9C",
+		SignerNID:  "urn:nps:org:org-a.com",
+		Signature:  "ed25519:xyz",
 	}
 	d := f.ToDict()
 	f2 := nip.TrustFrameFromDict(d)
-	if f2.IssuerNID != f.IssuerNID {
-		t.Errorf("IssuerNID mismatch")
+	if f2.GrantorNID != f.GrantorNID {
+		t.Errorf("GrantorNID mismatch")
 	}
-	if len(f2.Scopes) != 2 || f2.Scopes[0] != "read" {
-		t.Errorf("Scopes mismatch: %v", f2.Scopes)
+	if len(f2.TrustScope) != 2 || f2.TrustScope[0] != "nwp:query" {
+		t.Errorf("TrustScope mismatch: %v", f2.TrustScope)
 	}
-	if f2.ExpiresAt == nil || *f2.ExpiresAt != exp {
-		t.Errorf("ExpiresAt mismatch")
+	if len(f2.Nodes) != 1 || f2.Nodes[0] != "nwp://api.org-a.com/public/**" {
+		t.Errorf("Nodes mismatch: %v", f2.Nodes)
+	}
+	if f2.Serial != f.Serial || f2.SignerNID != f.SignerNID {
+		t.Errorf("audit fields mismatch: %#v", f2)
+	}
+	if _, ok := f.UnsignedDict()["signature"]; ok {
+		t.Error("UnsignedDict should not contain signature")
 	}
 }
 
 func TestRevokeFrame_Roundtrip(t *testing.T) {
-	reason := "key_compromise"
-	ts := "2026-01-01T00:00:00Z"
-	f := &nip.RevokeFrame{NID: "urn:nps:node:example.com:old", Reason: &reason, RevokedAt: &ts}
+	serial := "0x0A3F9C"
+	parent := "urn:nps:agent:ca.example.com:group-1"
+	f := &nip.RevokeFrame{
+		TargetNID: "urn:nps:agent:ca.example.com:session-1",
+		Serial:    &serial,
+		Reason:    "parent_revoked",
+		RevokedAt: "2026-01-01T00:00:00Z",
+		ParentNID: &parent,
+		SignerNID: "urn:nps:org:ca.example.com",
+		Signature: "ed25519:sig",
+	}
 	d := f.ToDict()
 	f2 := nip.RevokeFrameFromDict(d)
-	if f2.NID != f.NID {
-		t.Errorf("NID mismatch")
+	if f2.TargetNID != f.TargetNID {
+		t.Errorf("TargetNID mismatch")
 	}
-	if f2.Reason == nil || *f2.Reason != reason {
-		t.Errorf("Reason mismatch")
+	if f2.Serial == nil || *f2.Serial != serial {
+		t.Errorf("Serial mismatch")
+	}
+	if f2.ParentNID == nil || *f2.ParentNID != parent {
+		t.Errorf("ParentNID mismatch")
+	}
+	if f2.Reason != "parent_revoked" || f2.SignerNID != "urn:nps:org:ca.example.com" {
+		t.Errorf("Revoke fields mismatch: %#v", f2)
+	}
+	if _, ok := f.UnsignedDict()["signature"]; ok {
+		t.Error("UnsignedDict should not contain signature")
+	}
+}
+
+func TestRevokeFrame_ValidateParentNIDRule(t *testing.T) {
+	parent := "urn:nps:agent:ca.example.com:group-1"
+	cases := []struct {
+		name      string
+		reason    string
+		parentNID *string
+		wantErr   bool
+	}{
+		{"parent_revoked with parent", "parent_revoked", &parent, false},
+		{"parent_revoked missing parent", "parent_revoked", nil, true},
+		{"non-parent reason with parent", "key_compromise", &parent, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			frame := &nip.RevokeFrame{
+				TargetNID: "urn:nps:agent:ca.example.com:session-1",
+				Reason:    tc.reason,
+				RevokedAt: "2026-06-01T00:00:00Z",
+				ParentNID: tc.parentNID,
+				SignerNID: "urn:nps:org:ca.example.com",
+				Signature: "ed25519:sig",
+			}
+			err := frame.Validate()
+			if tc.wantErr && (err == nil || !strings.Contains(err.Error(), nip.ErrRevokeFrameInvalid)) {
+				t.Fatalf("want %s error, got %v", nip.ErrRevokeFrameInvalid, err)
+			}
+			if !tc.wantErr && err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
 	}
 }

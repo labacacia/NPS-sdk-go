@@ -2,14 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 package nip
 
-import "github.com/labacacia/NPS-sdk-go/core"
+import (
+	"fmt"
+
+	"github.com/labacacia/NPS-sdk-go/core"
+)
 
 func str(d core.FrameDict, k string) string {
-	if v, ok := d[k].(string); ok { return v }
+	if v, ok := d[k].(string); ok {
+		return v
+	}
 	return ""
 }
 func optStr(d core.FrameDict, k string) *string {
-	if v, ok := d[k].(string); ok { return &v }
+	if v, ok := d[k].(string); ok {
+		return &v
+	}
 	return nil
 }
 
@@ -49,24 +57,40 @@ func (f *IdentFrame) FrameType() core.FrameType { return core.FrameTypeIdent }
 // covering exactly the same payload as before NPS-RFC-0002.
 func (f *IdentFrame) UnsignedDict() core.FrameDict {
 	d := core.FrameDict{"nid": f.NID, "pub_key": f.PubKey}
-	if f.Meta != nil { d["metadata"] = f.Meta }
-	if f.AssuranceLevel != nil { d["assurance_level"] = f.AssuranceLevel.Wire }
+	if f.Meta != nil {
+		d["metadata"] = f.Meta
+	}
+	if f.AssuranceLevel != nil {
+		d["assurance_level"] = f.AssuranceLevel.Wire
+	}
 	return d
 }
 
 func (f *IdentFrame) ToDict() core.FrameDict {
 	d := f.UnsignedDict()
-	if f.Signature  != nil { d["signature"]   = *f.Signature }
-	if f.CertFormat != nil { d["cert_format"] = *f.CertFormat }
-	if f.CertChain  != nil { d["cert_chain"]  = f.CertChain }
-	if f.OCSPStaple != ""  { d["ocsp_staple"] = f.OCSPStaple }
-	if f.NodeRoles  != nil { d["node_roles"]  = f.NodeRoles }
+	if f.Signature != nil {
+		d["signature"] = *f.Signature
+	}
+	if f.CertFormat != nil {
+		d["cert_format"] = *f.CertFormat
+	}
+	if f.CertChain != nil {
+		d["cert_chain"] = f.CertChain
+	}
+	if f.OCSPStaple != "" {
+		d["ocsp_staple"] = f.OCSPStaple
+	}
+	if f.NodeRoles != nil {
+		d["node_roles"] = f.NodeRoles
+	}
 	return d
 }
 
 func IdentFrameFromDict(d core.FrameDict) *IdentFrame {
 	var meta map[string]any
-	if v, ok := d["metadata"].(map[string]any); ok { meta = v }
+	if v, ok := d["metadata"].(map[string]any); ok {
+		meta = v
+	}
 	var assurance *AssuranceLevel
 	if v, ok := d["assurance_level"].(string); ok {
 		if l, err := AssuranceFromWire(v); err == nil {
@@ -79,7 +103,9 @@ func IdentFrameFromDict(d core.FrameDict) *IdentFrame {
 		chain = v
 	case []any:
 		for _, item := range v {
-			if s, ok := item.(string); ok { chain = append(chain, s) }
+			if s, ok := item.(string); ok {
+				chain = append(chain, s)
+			}
 		}
 	}
 	var nodeRoles []string
@@ -88,7 +114,9 @@ func IdentFrameFromDict(d core.FrameDict) *IdentFrame {
 		nodeRoles = v
 	case []any:
 		for _, item := range v {
-			if s, ok := item.(string); ok { nodeRoles = append(nodeRoles, s) }
+			if s, ok := item.(string); ok {
+				nodeRoles = append(nodeRoles, s)
+			}
 		}
 	}
 	return &IdentFrame{
@@ -107,62 +135,154 @@ func IdentFrameFromDict(d core.FrameDict) *IdentFrame {
 // ── TrustFrame ────────────────────────────────────────────────────────────────
 
 type TrustFrame struct {
-	IssuerNID  string
-	SubjectNID string
-	Scopes     []string
-	ExpiresAt  *string
-	Signature  *string
+	GrantorNID string
+	GranteeCA  string
+	TrustScope []string
+	Nodes      []string
+	IssuedAt   string
+	ExpiresAt  string
+	Serial     string
+	SignerNID  string
+	Signature  string
 }
 
 func (f *TrustFrame) FrameType() core.FrameType { return core.FrameTypeTrust }
 
+func (f *TrustFrame) UnsignedDict() core.FrameDict {
+	return core.FrameDict{
+		"frame":       "0x21",
+		"grantor_nid": f.GrantorNID,
+		"grantee_ca":  f.GranteeCA,
+		"trust_scope": f.TrustScope,
+		"nodes":       f.Nodes,
+		"issued_at":   f.IssuedAt,
+		"expires_at":  f.ExpiresAt,
+		"serial":      f.Serial,
+		"signer_nid":  f.SignerNID,
+	}
+}
+
 func (f *TrustFrame) ToDict() core.FrameDict {
-	d := core.FrameDict{"issuer_nid": f.IssuerNID, "subject_nid": f.SubjectNID, "scopes": f.Scopes}
-	if f.ExpiresAt != nil { d["expires_at"] = *f.ExpiresAt }
-	if f.Signature != nil { d["signature"] = *f.Signature }
+	d := f.UnsignedDict()
+	d["signature"] = f.Signature
 	return d
 }
 
 func TrustFrameFromDict(d core.FrameDict) *TrustFrame {
-	var scopes []string
-	switch v := d["scopes"].(type) {
+	var trustScope []string
+	switch v := first(d, "trust_scope", "scopes").(type) {
 	case []string:
-		scopes = v
+		trustScope = v
 	case []any:
 		for _, s := range v {
-			if sv, ok := s.(string); ok { scopes = append(scopes, sv) }
+			if sv, ok := s.(string); ok {
+				trustScope = append(trustScope, sv)
+			}
 		}
 	}
+	nodes := stringSlice(d["nodes"])
 	return &TrustFrame{
-		IssuerNID:  str(d, "issuer_nid"),
-		SubjectNID: str(d, "subject_nid"),
-		Scopes:     scopes,
-		ExpiresAt:  optStr(d, "expires_at"),
-		Signature:  optStr(d, "signature"),
+		GrantorNID: strAny(d, "grantor_nid", "issuer_nid"),
+		GranteeCA:  strAny(d, "grantee_ca", "subject_nid"),
+		TrustScope: trustScope,
+		Nodes:      nodes,
+		IssuedAt:   str(d, "issued_at"),
+		ExpiresAt:  str(d, "expires_at"),
+		Serial:     str(d, "serial"),
+		SignerNID:  strAny(d, "signer_nid", "grantor_nid", "issuer_nid"),
+		Signature:  str(d, "signature"),
 	}
 }
 
 // ── RevokeFrame ───────────────────────────────────────────────────────────────
 
 type RevokeFrame struct {
-	NID       string
-	Reason    *string
-	RevokedAt *string
+	TargetNID string
+	Serial    *string
+	Reason    string
+	RevokedAt string
+	ParentNID *string
+	SignerNID string
+	Signature string
 }
 
 func (f *RevokeFrame) FrameType() core.FrameType { return core.FrameTypeRevoke }
 
+func (f *RevokeFrame) Validate() error {
+	if f.Reason == "parent_revoked" {
+		if f.ParentNID == nil || *f.ParentNID == "" {
+			return fmt.Errorf("%s: parent_nid is required when reason=parent_revoked", ErrRevokeFrameInvalid)
+		}
+	} else if f.ParentNID != nil {
+		return fmt.Errorf("%s: parent_nid must be omitted unless reason=parent_revoked", ErrRevokeFrameInvalid)
+	}
+	return nil
+}
+
+func (f *RevokeFrame) UnsignedDict() core.FrameDict {
+	d := core.FrameDict{
+		"frame":      "0x22",
+		"target_nid": f.TargetNID,
+		"reason":     f.Reason,
+		"revoked_at": f.RevokedAt,
+		"signer_nid": f.SignerNID,
+	}
+	if f.Serial != nil {
+		d["serial"] = *f.Serial
+	}
+	if f.ParentNID != nil {
+		d["parent_nid"] = *f.ParentNID
+	}
+	return d
+}
+
 func (f *RevokeFrame) ToDict() core.FrameDict {
-	d := core.FrameDict{"nid": f.NID}
-	if f.Reason    != nil { d["reason"]     = *f.Reason }
-	if f.RevokedAt != nil { d["revoked_at"] = *f.RevokedAt }
+	d := f.UnsignedDict()
+	d["signature"] = f.Signature
 	return d
 }
 
 func RevokeFrameFromDict(d core.FrameDict) *RevokeFrame {
 	return &RevokeFrame{
-		NID:       str(d, "nid"),
-		Reason:    optStr(d, "reason"),
-		RevokedAt: optStr(d, "revoked_at"),
+		TargetNID: strAny(d, "target_nid", "nid"),
+		Serial:    optStr(d, "serial"),
+		Reason:    str(d, "reason"),
+		RevokedAt: str(d, "revoked_at"),
+		ParentNID: optStr(d, "parent_nid"),
+		SignerNID: str(d, "signer_nid"),
+		Signature: str(d, "signature"),
 	}
+}
+
+func first(d core.FrameDict, keys ...string) any {
+	for _, key := range keys {
+		if value, ok := d[key]; ok {
+			return value
+		}
+	}
+	return nil
+}
+
+func strAny(d core.FrameDict, keys ...string) string {
+	for _, key := range keys {
+		if v, ok := d[key].(string); ok {
+			return v
+		}
+	}
+	return ""
+}
+
+func stringSlice(value any) []string {
+	var out []string
+	switch v := value.(type) {
+	case []string:
+		return v
+	case []any:
+		for _, item := range v {
+			if s, ok := item.(string); ok {
+				out = append(out, s)
+			}
+		}
+	}
+	return out
 }
