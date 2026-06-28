@@ -311,7 +311,7 @@ func TestCodec_BinaryVectorConformanceFixture(t *testing.T) {
 	if !ok {
 		t.Fatal("runtime.Caller failed")
 	}
-	path := filepath.Join(filepath.Dir(current), "../../../spec/conformance/ncp/binary_vector_payload_vectors.json")
+	path := filepath.Join(filepath.Dir(current), "testdata/conformance/ncp/binary_vector_payload_vectors.json")
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
