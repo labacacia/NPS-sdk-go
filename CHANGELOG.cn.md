@@ -8,6 +8,12 @@
 
 ---
 
+## [1.0.0-alpha.16] —— 2026-07-23
+
+### 变更
+
+- 套件级 alpha.16 同步：在 alpha.15 已发布后，对齐包元数据、当前 README / 版本 banner 以及 conformance fixtures。
+
 ## [1.0.0-alpha.15] —— 2026-06-28
 
 ### 变更
