@@ -172,7 +172,7 @@ var NodeL1Cases = []Case{
 	c("TC-N1-NDP-01", NodeL1, "N1-NDP-01", "AnnounceFrame carries activation_mode"),
 	c("TC-N1-NDP-02", NodeL1, "N1-NDP-02", "AnnounceFrame signature"),
 	c("TC-N1-NDP-03", NodeL1, "N1-NDP-03", "ResolveFrame response"),
-	c("TC-N1-NDP-04", NodeL1, "N1-NDP-04", "GraphFrame subscription", true),
+	c("TC-N1-NDP-04", NodeL1, "N1-NDP-04", "GraphFrame topology snapshot", true),
 	c("TC-N1-NWP-01", NodeL1, "N1-NWP-01", "Inbox accepts ActionFrame"),
 	c("TC-N1-NWP-02", NodeL1, "N1-NWP-02", "Inbox persists across restart"),
 	c("TC-N1-NWP-03", NodeL1, "N1-NWP-03", "NWP pull serves inbox"),

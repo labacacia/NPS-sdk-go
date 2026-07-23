@@ -1,9 +1,9 @@
 [English Version](./README.md) | 中文版
 
-# NPS Go SDK v1.0.0-alpha.15
+# NPS Go SDK v1.0.0-alpha.16
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](../../LICENSE)
-[![Release](https://img.shields.io/badge/release-v1.0.0--alpha.15-orange.svg)](../../CHANGELOG.cn.md)
+[![Release](https://img.shields.io/badge/release-v1.0.0--alpha.16-orange.svg)](../../CHANGELOG.cn.md)
 [![NCP](https://img.shields.io/badge/NCP-v0.9-5b8cff.svg)]()
 [![NWP](https://img.shields.io/badge/NWP-v0.14-4af0b0.svg)]()
 [![NIP](https://img.shields.io/badge/NIP-v0.10-7b61ff.svg)]()
@@ -189,10 +189,10 @@ for _, c := range cases {
 manifest := conformance.NewManifest(
     conformance.NodeL1,
     "my-node",
-    "1.0.0-alpha.15",
+    "1.0.0-alpha.16",
     "urn:nps:node:example.com:my-node",
     "labacacia-fixture",
-    "1.0.0-alpha.15",
+    "1.0.0-alpha.16",
     results,
     "ci",
 )
@@ -289,6 +289,7 @@ err = client.Cancel(ctx, taskID)
 |------|------|------|
 | JSON | `core.EncodingTierJSON` | 可读，Tier-1 |
 | MsgPack | `core.EncodingTierMsgPack` | 约 60% 体积削减，Tier-2（默认） |
+| BinaryVector | `core.EncodingTierBinaryVector` | `binary_vector.v1`，用于向量密集型帧的 Tier-3 |
 
 ---
 

@@ -1,9 +1,9 @@
 English | [中文版](./README.cn.md)
 
-# NPS Go SDK v1.0.0-alpha.15
+# NPS Go SDK v1.0.0-alpha.16
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](../../LICENSE)
-[![Release](https://img.shields.io/badge/release-v1.0.0--alpha.15-orange.svg)](../../CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-v1.0.0--alpha.16-orange.svg)](../../CHANGELOG.md)
 [![NCP](https://img.shields.io/badge/NCP-v0.9-5b8cff.svg)]()
 [![NWP](https://img.shields.io/badge/NWP-v0.14-4af0b0.svg)]()
 [![NIP](https://img.shields.io/badge/NIP-v0.10-7b61ff.svg)]()
@@ -137,6 +137,10 @@ server.ActionHandler = func(ctx context.Context, action *nwp.ActionFrame) (any, 
 err := server.Serve(ctx, rw)
 ```
 
+Native serving keeps decode/encode on the negotiated default tier, accepts
+Tier-3 `binary_vector.v1` only when negotiated for QueryFrame payloads, and
+rejects malformed BinaryVector payloads, including NaN/Inf float32 values.
+
 ### NIP — Identity & Signing
 
 ```go
@@ -189,10 +193,10 @@ for _, c := range cases {
 manifest := conformance.NewManifest(
     conformance.NodeL1,
     "my-node",
-    "1.0.0-alpha.15",
+    "1.0.0-alpha.16",
     "urn:nps:node:example.com:my-node",
     "labacacia-fixture",
-    "1.0.0-alpha.15",
+    "1.0.0-alpha.16",
     results,
     "ci",
 )
@@ -289,6 +293,7 @@ err = client.Cancel(ctx, taskID)
 |------|----------|-------|
 | JSON | `core.EncodingTierJSON` | Human-readable, Tier-1 |
 | MsgPack | `core.EncodingTierMsgPack` | ~60% size reduction, Tier-2 (default) |
+| BinaryVector | `core.EncodingTierBinaryVector` | `binary_vector.v1`, Tier-3 for vector-heavy frames |
 
 ---
 
