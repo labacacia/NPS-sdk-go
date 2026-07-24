@@ -70,6 +70,12 @@ const (
 
 	// NIP v0.10 — node_roles.
 	ErrCertNodeRolesMismatch = "NIP-CERT-NODE-ROLES-MISMATCH"
+
+	// RA enrollment errors (NPS-CR-0005 §3).
+	ErrRaTokenInvalid    = "NIP-RA-TOKEN-INVALID"
+	ErrRaTokenExpired    = "NIP-RA-TOKEN-EXPIRED"
+	ErrRaNidNotAllowed   = "NIP-RA-NID-NOT-ALLOWED"
+	ErrRaPendingRejected = "NIP-RA-PENDING-REJECTED"
 )
 
 // NipErrorToNpsStatus maps each NIP error code to its NPS status code.
@@ -124,4 +130,9 @@ var NipErrorToNpsStatus = map[string]string{
 	ErrCertParentRevoked:     core.NpsAuthUnauthenticated,
 	ErrOcspStapleExpired:     core.NpsAuthUnauthenticated,
 	ErrCertNodeRolesMismatch: core.NpsAuthForbidden,
+
+	ErrRaTokenInvalid:    core.NpsAuthUnauthenticated,
+	ErrRaTokenExpired:    core.NpsAuthUnauthenticated,
+	ErrRaNidNotAllowed:   core.NpsAuthForbidden,
+	ErrRaPendingRejected: core.NpsAuthForbidden,
 }

@@ -436,3 +436,36 @@ func TestAnchorCache_ComputeAnchorID_Deterministic(t *testing.T) {
 		t.Error("AnchorID should be order-independent")
 	}
 }
+
+// TestComputeAnchorID_GoldenVector pins the cross-SDK anchor_id computed by the
+// .NET reference SDK (AnchorIdComputer) over the structured FrameSchema. The
+// canonical JCS form is:
+//   {"fields":[{"name":"id","nullable":false,"type":"uint64"},
+//              {"name":"label","nullable":true,"semantic":"entity.label","type":"string"}]}
+// with per-field key order name,nullable,semantic(omitted if null),type.
+func TestComputeAnchorID_GoldenVector(t *testing.T) {
+	schema := core.FrameDict{
+		"fields": []any{
+			map[string]any{"name": "id", "type": "uint64", "nullable": false},
+			map[string]any{"name": "label", "type": "string", "semantic": "entity.label", "nullable": true},
+		},
+	}
+	const want = "sha256:13c2ce4979f67a12d7f859f082deab4bebfc8dd1d3c506234062582ac54bbd1a"
+	if got := core.ComputeAnchorID(schema); got != want {
+		t.Errorf("anchor_id mismatch\n got: %s\nwant: %s", got, want)
+	}
+}
+
+// TestComputeAnchorID_OmitsNullSemantic verifies a null/empty semantic is omitted
+// (not emitted as "semantic":null) — matching .NET's WhenWritingNull behaviour.
+func TestComputeAnchorID_OmitsNullSemantic(t *testing.T) {
+	withNull := core.FrameDict{"fields": []any{
+		map[string]any{"name": "id", "type": "uint64", "nullable": false, "semantic": nil},
+	}}
+	without := core.FrameDict{"fields": []any{
+		map[string]any{"name": "id", "type": "uint64", "nullable": false},
+	}}
+	if core.ComputeAnchorID(withNull) != core.ComputeAnchorID(without) {
+		t.Error("null semantic must be omitted, yielding the same anchor_id as when absent")
+	}
+}

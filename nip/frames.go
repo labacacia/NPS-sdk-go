@@ -37,6 +37,17 @@ type IdentFrame struct {
 	Meta      map[string]any
 	Signature *string
 
+	// NPS-3 §5.1 core cert fields (wire: issued_by, issued_at, expires_at,
+	// serial, capabilities, scope). The full six-step NPS-3 §7 verifier
+	// (VerifyFull) consumes these; the legacy dual-trust Verify does not.
+	IssuedBy     string
+	IssuedAt     string
+	ExpiresAt    string
+	Serial       string
+	Capabilities []string
+	// Scope is the raw scope object, e.g. {"nodes":[...],"actions":[...]}.
+	Scope map[string]any
+
 	// NPS-RFC-0003 — optional assurance level.
 	AssuranceLevel *AssuranceLevel
 	// NPS-RFC-0002 — optional v2 X.509 dual-trust extensions.
@@ -48,6 +59,11 @@ type IdentFrame struct {
 	OCSPStaple string
 	// NodeRoles is a list of self-declared node-role tags (NIP v0.10 alpha.13).
 	NodeRoles []string
+
+	// lineage is the CA-issued signed lineage object (NPS-CR-0003 §5.1.3),
+	// present on group / session frames. Emitted as the top-level "lineage"
+	// wire field by the CA router; not part of the v1 UnsignedDict.
+	lineage map[string]any
 }
 
 func (f *IdentFrame) FrameType() core.FrameType { return core.FrameTypeIdent }
@@ -68,6 +84,24 @@ func (f *IdentFrame) UnsignedDict() core.FrameDict {
 
 func (f *IdentFrame) ToDict() core.FrameDict {
 	d := f.UnsignedDict()
+	if f.IssuedBy != "" {
+		d["issued_by"] = f.IssuedBy
+	}
+	if f.IssuedAt != "" {
+		d["issued_at"] = f.IssuedAt
+	}
+	if f.ExpiresAt != "" {
+		d["expires_at"] = f.ExpiresAt
+	}
+	if f.Serial != "" {
+		d["serial"] = f.Serial
+	}
+	if f.Capabilities != nil {
+		d["capabilities"] = f.Capabilities
+	}
+	if f.Scope != nil {
+		d["scope"] = f.Scope
+	}
 	if f.Signature != nil {
 		d["signature"] = *f.Signature
 	}
@@ -119,11 +153,21 @@ func IdentFrameFromDict(d core.FrameDict) *IdentFrame {
 			}
 		}
 	}
+	var scope map[string]any
+	if v, ok := d["scope"].(map[string]any); ok {
+		scope = v
+	}
 	return &IdentFrame{
 		NID:            str(d, "nid"),
 		PubKey:         str(d, "pub_key"),
 		Meta:           meta,
 		Signature:      optStr(d, "signature"),
+		IssuedBy:       str(d, "issued_by"),
+		IssuedAt:       str(d, "issued_at"),
+		ExpiresAt:      str(d, "expires_at"),
+		Serial:         str(d, "serial"),
+		Capabilities:   stringSlice(d["capabilities"]),
+		Scope:          scope,
 		AssuranceLevel: assurance,
 		CertFormat:     optStr(d, "cert_format"),
 		CertChain:      chain,

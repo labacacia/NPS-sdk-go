@@ -115,10 +115,10 @@ func (f *DelegateFrame) FrameType() core.FrameType { return core.FrameTypeDelega
 
 func (f *DelegateFrame) ToDict() core.FrameDict {
 	d := core.FrameDict{
-		"task_id":    f.TaskID,
-		"subtask_id": f.SubtaskID,
-		"action":     f.Action,
-		"target_nid": f.TargetNID,
+		"parent_task_id":   f.TaskID,
+		"subtask_id":       f.SubtaskID,
+		"action":           f.Action,
+		"target_agent_nid": f.TargetNID,
 	}
 	if f.Inputs              != nil { d["inputs"]                = f.Inputs }
 	if f.Config              != nil { d["config"]                = f.Config }
@@ -129,10 +129,10 @@ func (f *DelegateFrame) ToDict() core.FrameDict {
 
 func DelegateFrameFromDict(d core.FrameDict) *DelegateFrame {
 	return &DelegateFrame{
-		TaskID:              str(d, "task_id"),
+		TaskID:              str(d, "parent_task_id"),
 		SubtaskID:           str(d, "subtask_id"),
 		Action:              str(d, "action"),
-		TargetNID:           str(d, "target_nid"),
+		TargetNID:           str(d, "target_agent_nid"),
 		Inputs:              d["inputs"],
 		Config:              d["config"],
 		IdempotencyKey:      optStr(d, "idempotency_key"),
@@ -157,7 +157,7 @@ func (f *SyncFrame) ToDict() core.FrameDict {
 	d := core.FrameDict{
 		"task_id":      f.TaskID,
 		"sync_id":      f.SyncID,
-		"subtask_ids":  f.SubtaskIDs,
+		"wait_for":     f.SubtaskIDs,
 		"min_required": f.MinRequired,
 		"aggregate":    f.Aggregate,
 	}
@@ -171,7 +171,7 @@ func SyncFrameFromDict(d core.FrameDict) *SyncFrame {
 	return &SyncFrame{
 		TaskID:      str(d, "task_id"),
 		SyncID:      str(d, "sync_id"),
-		SubtaskIDs:  toSliceStr(d["subtask_ids"]),
+		SubtaskIDs:  toSliceStr(d["wait_for"]),
 		MinRequired: toInt64(d["min_required"]),
 		Aggregate:   agg,
 		TimeoutMs:   optUint64(d, "timeout_ms"),
@@ -210,13 +210,13 @@ func (f *AlignStreamFrame) ErrorMessage() string {
 
 func (f *AlignStreamFrame) ToDict() core.FrameDict {
 	d := core.FrameDict{
-		"sync_id":    f.SyncID,
+		"stream_id":  f.SyncID,
 		"task_id":    f.TaskID,
 		"subtask_id": f.SubtaskID,
 		"seq":        f.Seq,
 		"is_final":   f.IsFinal,
 	}
-	if f.SourceNID  != nil { d["source_nid"]  = *f.SourceNID }
+	if f.SourceNID  != nil { d["sender_nid"]  = *f.SourceNID }
 	if f.Result     != nil { d["result"]      = f.Result }
 	if f.Error      != nil { d["error"]       = f.Error }
 	if f.WindowSize != nil { d["window_size"] = *f.WindowSize }
@@ -230,12 +230,12 @@ func AlignStreamFrameFromDict(d core.FrameDict) *AlignStreamFrame {
 	var errMap map[string]any
 	if v, ok := d["error"].(map[string]any); ok { errMap = v }
 	return &AlignStreamFrame{
-		SyncID:     str(d, "sync_id"),
+		SyncID:     str(d, "stream_id"),
 		TaskID:     str(d, "task_id"),
 		SubtaskID:  str(d, "subtask_id"),
 		Seq:        toUint64(d["seq"]),
 		IsFinal:    isFinal,
-		SourceNID:  optStr(d, "source_nid"),
+		SourceNID:  optStr(d, "sender_nid"),
 		Result:     d["result"],
 		Error:      errMap,
 		WindowSize: optUint64(d, "window_size"),

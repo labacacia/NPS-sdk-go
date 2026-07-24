@@ -3,6 +3,8 @@
 package nip_test
 
 import (
+	"crypto/ed25519"
+	"encoding/base64"
 	"os"
 	"path/filepath"
 	"strings"
@@ -34,9 +36,41 @@ func TestPubKeyString_Format(t *testing.T) {
 	if !strings.HasPrefix(pks, "ed25519:") {
 		t.Errorf("PubKeyString should start with 'ed25519:', got %q", pks)
 	}
-	hex := pks[8:]
-	if len(hex) != 64 {
-		t.Errorf("hex-encoded public key should be 64 chars, got %d", len(hex))
+	// RFC 4648 base64url unpadded encoding of a 32-byte key = 43 chars, no padding.
+	enc := pks[8:]
+	if len(enc) != 43 {
+		t.Errorf("base64url public key should be 43 chars, got %d (%q)", len(enc), enc)
+	}
+	if strings.ContainsAny(enc, "+/=") {
+		t.Errorf("base64url encoding must not contain +, / or padding =; got %q", enc)
+	}
+}
+
+// TestNipEncoding_GoldenVector pins the exact base64url wire encoding of a known
+// Ed25519 public key and signature, keeping Go byte-compatible with the .NET
+// reference SDK (NipSigner: "ed25519:<base64url-unpadded>"). Seed is all-0x01,
+// message is fixed. base64url is implementation-independent, so these values
+// match .NET's Convert.ToBase64String(...).Replace('+','-').Replace('/','_').TrimEnd('=').
+func TestNipEncoding_GoldenVector(t *testing.T) {
+	seed := make([]byte, ed25519.SeedSize)
+	for i := range seed {
+		seed[i] = 0x01
+	}
+	priv := ed25519.NewKeyFromSeed(seed)
+	pub := priv.Public().(ed25519.PublicKey)
+
+	const wantPub = "ed25519:iojj3XQJ8ZX9UtstPLpdcspnCb8dlBIb83SIAbQPb1w"
+	const wantSig = "ed25519:lXddKLPCxD_8YHlrOQJmh02Dnns-_RTRkgvdSB09sIgcrgFDR-8FSY4be-f_AqsYmM-v8Z9DO5xyjsv5L0kMBg"
+
+	gotPub := "ed25519:" + base64.RawURLEncoding.EncodeToString(pub)
+	if gotPub != wantPub {
+		t.Errorf("public key encoding drift\n got: %s\nwant: %s", gotPub, wantPub)
+	}
+
+	sig := ed25519.Sign(priv, []byte("nps-wire-interop"))
+	gotSig := "ed25519:" + base64.RawURLEncoding.EncodeToString(sig)
+	if gotSig != wantSig {
+		t.Errorf("signature encoding drift\n got: %s\nwant: %s", gotSig, wantSig)
 	}
 }
 

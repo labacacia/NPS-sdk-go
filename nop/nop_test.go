@@ -249,7 +249,7 @@ func TestSyncFrame_DefaultAggregate(t *testing.T) {
 	d := map[string]any{
 		"task_id":      "t1",
 		"sync_id":      "s1",
-		"subtask_ids":  []any{"a"},
+		"wait_for":     []any{"a"},
 		"min_required": float64(1),
 	}
 	f := nop.SyncFrameFromDict(d)
@@ -302,5 +302,68 @@ func TestAlignStreamFrame_NoError(t *testing.T) {
 	f := &nop.AlignStreamFrame{SyncID: "s", TaskID: "t", SubtaskID: "st", Seq: 0}
 	if f.ErrorCode() != "" || f.ErrorMessage() != "" {
 		t.Error("error fields should be empty when Error is nil")
+	}
+}
+
+// ── D3: wire-key parity with the .NET reference (NPS.NOP/Frames/NopFrames.cs) ──
+
+// TestSyncFrame_WireKeys pins the .NET wire key "wait_for" (not "subtask_ids").
+func TestSyncFrame_WireKeys(t *testing.T) {
+	f := &nop.SyncFrame{TaskID: "t", SyncID: "s", SubtaskIDs: []string{"a", "b"}}
+	d := f.ToDict()
+	if _, ok := d["wait_for"]; !ok {
+		t.Error("SyncFrame must emit 'wait_for' (matching .NET), got keys without it")
+	}
+	if _, ok := d["subtask_ids"]; ok {
+		t.Error("SyncFrame must NOT emit legacy 'subtask_ids'")
+	}
+	// Inbound decode from the .NET wire key must populate SubtaskIDs.
+	f2 := nop.SyncFrameFromDict(map[string]any{
+		"task_id": "t", "sync_id": "s", "wait_for": []any{"a", "b"},
+	})
+	if len(f2.SubtaskIDs) != 2 || f2.SubtaskIDs[0] != "a" {
+		t.Errorf("SyncFrame did not decode 'wait_for': %v", f2.SubtaskIDs)
+	}
+}
+
+// TestAlignStreamFrame_WireKeys pins .NET wire keys "stream_id" and "sender_nid".
+func TestAlignStreamFrame_WireKeys(t *testing.T) {
+	src := "urn:nps:node:example.com:worker"
+	f := &nop.AlignStreamFrame{SyncID: "strm-1", TaskID: "t", SubtaskID: "st", Seq: 1, SourceNID: &src}
+	d := f.ToDict()
+	if _, ok := d["stream_id"]; !ok {
+		t.Error("AlignStreamFrame must emit 'stream_id' (matching .NET)")
+	}
+	if _, ok := d["sync_id"]; ok {
+		t.Error("AlignStreamFrame must NOT emit legacy 'sync_id'")
+	}
+	if _, ok := d["sender_nid"]; !ok {
+		t.Error("AlignStreamFrame must emit 'sender_nid' (matching .NET)")
+	}
+	if _, ok := d["source_nid"]; ok {
+		t.Error("AlignStreamFrame must NOT emit legacy 'source_nid'")
+	}
+	f2 := nop.AlignStreamFrameFromDict(d)
+	if f2.SyncID != "strm-1" || f2.SourceNID == nil || *f2.SourceNID != src {
+		t.Error("AlignStreamFrame round-trip via .NET wire keys failed")
+	}
+}
+
+// TestDelegateFrame_WireKeys pins .NET wire keys "parent_task_id" and "target_agent_nid".
+func TestDelegateFrame_WireKeys(t *testing.T) {
+	f := &nop.DelegateFrame{TaskID: "pt", SubtaskID: "st", Action: "nwp://x", TargetNID: "urn:nps:node:w"}
+	d := f.ToDict()
+	if _, ok := d["parent_task_id"]; !ok {
+		t.Error("DelegateFrame must emit 'parent_task_id' (matching .NET)")
+	}
+	if _, ok := d["target_agent_nid"]; !ok {
+		t.Error("DelegateFrame must emit 'target_agent_nid' (matching .NET)")
+	}
+	if _, ok := d["target_nid"]; ok {
+		t.Error("DelegateFrame must NOT emit legacy 'target_nid'")
+	}
+	f2 := nop.DelegateFrameFromDict(d)
+	if f2.TaskID != "pt" || f2.TargetNID != "urn:nps:node:w" {
+		t.Error("DelegateFrame round-trip via .NET wire keys failed")
 	}
 }

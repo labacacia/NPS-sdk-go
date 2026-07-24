@@ -8,7 +8,6 @@ import (
 	cryptox509 "crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"math/big"
 	"net/url"
@@ -243,7 +242,7 @@ func buildV2Frame(t *testing.T, nid string, subjectPub ed25519.PublicKey,
 	}
 	canonical := canonicalSorted(frame.UnsignedDict())
 	sig := ed25519.Sign(caPriv, []byte(canonical))
-	sigWire := "ed25519:" + base64.StdEncoding.EncodeToString(sig)
+	sigWire := "ed25519:" + base64.RawURLEncoding.EncodeToString(sig)
 	frame.Signature = &sigWire
 
 	v2 := npsnip.CertFormatV2X509
@@ -291,7 +290,7 @@ func buildLeafWithoutEku(t *testing.T, nid string, subjectPub ed25519.PublicKey,
 }
 
 func pubKeyHex(pub ed25519.PublicKey) string {
-	return "ed25519:" + hex.EncodeToString(pub)
+	return "ed25519:" + base64.RawURLEncoding.EncodeToString(pub)
 }
 
 // canonicalSorted matches NipIdentity.canonicalJSON / verifier.canonicalSorted —

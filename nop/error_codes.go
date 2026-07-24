@@ -24,8 +24,9 @@ const (
 	ErrResourceInsufficient   = "NOP-RESOURCE-INSUFFICIENT"
 	ErrConditionEvalError     = "NOP-CONDITION-EVAL-ERROR"
 	ErrInputMappingError      = "NOP-INPUT-MAPPING-ERROR"
-	ErrCompensationFailed     = "NOP-COMPENSATION-FAILED"
-	ErrCompensationNotSupported = "NOP-COMPENSATION-NOT-SUPPORTED"
+	ErrCompensationFailed        = "NOP-COMPENSATION-FAILED"
+	ErrCompensationPartialFailed = "NOP-COMPENSATION-PARTIAL-FAILED"
+	ErrCompensationNotSupported  = "NOP-COMPENSATION-NOT-SUPPORTED"
 
 	// Additional codes referenced in task description.
 	ErrStreamNak              = "NOP-STREAM-NAK"
@@ -55,8 +56,9 @@ var NopErrorToNpsStatus = map[string]string{
 	ErrResourceInsufficient:   core.NpsServerUnavailable,
 	ErrConditionEvalError:     core.NpsClientBadParam,
 	ErrInputMappingError:      core.NpsClientUnprocessable,
-	ErrCompensationFailed:     core.NpsClientUnprocessable,
-	ErrCompensationNotSupported: core.NpsClientUnprocessable,
+	ErrCompensationFailed:        core.NpsClientUnprocessable,
+	ErrCompensationPartialFailed: core.NpsClientUnprocessable,
+	ErrCompensationNotSupported:  core.NpsClientUnprocessable,
 	ErrStreamNak:              core.NpsStreamSeqGap,
 	ErrCallbackHmacMissing:    core.NpsAuthUnauthenticated,
 	ErrTaskResultExpired:      core.NpsClientNotFound,

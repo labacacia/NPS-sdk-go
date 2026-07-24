@@ -199,7 +199,7 @@ func SignEntry(privKey ed25519.PrivateKey, entry ReputationLogEntry) (Reputation
 	}
 
 	sig := ed25519.Sign(privKey, canonical)
-	entry.Signature = "ed25519:" + base64.StdEncoding.EncodeToString(sig)
+	entry.Signature = "ed25519:" + base64.RawURLEncoding.EncodeToString(sig)
 	return entry, nil
 }
 
@@ -209,7 +209,7 @@ func VerifyEntry(pubKey ed25519.PublicKey, entry ReputationLogEntry) bool {
 	if !strings.HasPrefix(sigStr, "ed25519:") {
 		return false
 	}
-	sigBytes, err := base64.StdEncoding.DecodeString(sigStr[8:])
+	sigBytes, err := base64.RawURLEncoding.DecodeString(sigStr[8:])
 	if err != nil || len(sigBytes) != ed25519.SignatureSize {
 		return false
 	}

@@ -43,16 +43,20 @@ func Generate() (*NipIdentity, error) {
 	return &NipIdentity{privKey: priv, pubKey: pub}, nil
 }
 
-// PubKeyString returns "ed25519:<hex-encoded public key>".
+// PubKeyString returns "ed25519:<base64url(raw 32-byte public key)>".
+// Encoding is RFC 4648 base64url, unpadded — matching the .NET reference
+// (NipSigner.EncodePublicKey) so IdentFrame pub_key fields are wire-compatible.
 func (id *NipIdentity) PubKeyString() string {
-	return "ed25519:" + hex.EncodeToString(id.pubKey)
+	return "ed25519:" + base64.RawURLEncoding.EncodeToString(id.pubKey)
 }
 
 // Sign signs a FrameDict using canonical JSON (sorted keys).
+// The signature is encoded as "ed25519:<base64url>" (unpadded), matching the
+// .NET reference (NipSigner.Sign).
 func (id *NipIdentity) Sign(payload core.FrameDict) string {
 	canonical := canonicalJSON(payload)
 	sig := ed25519.Sign(id.privKey, []byte(canonical))
-	return "ed25519:" + base64.StdEncoding.EncodeToString(sig)
+	return "ed25519:" + base64.RawURLEncoding.EncodeToString(sig)
 }
 
 // Verify verifies a signature string against a FrameDict.
@@ -60,15 +64,15 @@ func (id *NipIdentity) Verify(payload core.FrameDict, signature string) bool {
 	return VerifyWithPubKeyStr(payload, id.PubKeyString(), signature)
 }
 
-// VerifyWithPubKeyStr verifies a signature using a "ed25519:<hex>" public key string.
+// VerifyWithPubKeyStr verifies a signature using a "ed25519:<base64url>" public key string.
 func VerifyWithPubKeyStr(payload core.FrameDict, pubKeyStr, signature string) bool {
-	hexStr := ""
+	pubB64 := ""
 	if len(pubKeyStr) > 8 && pubKeyStr[:8] == "ed25519:" {
-		hexStr = pubKeyStr[8:]
+		pubB64 = pubKeyStr[8:]
 	} else {
 		return false
 	}
-	pubBytes, err := hex.DecodeString(hexStr)
+	pubBytes, err := base64.RawURLEncoding.DecodeString(pubB64)
 	if err != nil || len(pubBytes) != ed25519.PublicKeySize {
 		return false
 	}
@@ -79,7 +83,7 @@ func VerifyWithPubKeyStr(payload core.FrameDict, pubKeyStr, signature string) bo
 	} else {
 		return false
 	}
-	sigBytes, err := base64.StdEncoding.DecodeString(sigB64)
+	sigBytes, err := base64.RawURLEncoding.DecodeString(sigB64)
 	if err != nil || len(sigBytes) != ed25519.SignatureSize {
 		return false
 	}

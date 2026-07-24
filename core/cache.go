@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 )
@@ -32,8 +33,17 @@ func NewAnchorFrameCache() *AnchorFrameCache {
 }
 
 // ComputeAnchorID returns a deterministic SHA-256 hex anchor ID for a schema map.
+//
+// When the schema carries a structured "fields" array (the FrameSchema shape used
+// by AnchorFrame — NPS-1 §4.1), the anchor_id is computed over the RFC 8785 JCS
+// canonical form matching the .NET reference SDK (AnchorIdComputer). Otherwise, for
+// backward compatibility with generic dicts, it falls back to key-sorted json.Marshal.
 func ComputeAnchorID(schema FrameDict) string {
-	// Sort keys for canonical JSON
+	if canonical, ok := canonicalFrameSchemaJSON(schema); ok {
+		h := sha256.Sum256([]byte(canonical))
+		return fmt.Sprintf("sha256:%x", h)
+	}
+	// Fallback: key-sorted generic dict.
 	keys := make([]string, 0, len(schema))
 	for k := range schema {
 		keys = append(keys, k)
@@ -46,6 +56,95 @@ func ComputeAnchorID(schema FrameDict) string {
 	b, _ := json.Marshal(ordered)
 	h := sha256.Sum256(b)
 	return fmt.Sprintf("sha256:%x", h)
+}
+
+// canonicalFrameSchemaJSON emits the RFC 8785 JCS canonical form of a structured
+// FrameSchema: {"fields":[{"name":..,"nullable":true|false,"semantic":..(omitted if
+// null/empty),"type":..}, ...]}. Per-field JCS key order is exactly name, nullable,
+// semantic (only if non-empty), type. Strings are emitted without HTML-escaping and
+// without extra whitespace, matching the .NET AnchorIdComputer.
+//
+// Returns (canonical, true) only when schema has a "fields" value that is a list of
+// field maps; otherwise (\"\", false) so the caller can fall back.
+func canonicalFrameSchemaJSON(schema FrameDict) (string, bool) {
+	raw, ok := schema["fields"]
+	if !ok {
+		return "", false
+	}
+	var fields []any
+	switch v := raw.(type) {
+	case []any:
+		fields = v
+	case []map[string]any:
+		fields = make([]any, len(v))
+		for i := range v {
+			fields[i] = v[i]
+		}
+	default:
+		return "", false
+	}
+
+	var sb strings.Builder
+	sb.WriteString(`{"fields":[`)
+	for i, fAny := range fields {
+		fm, ok := fAny.(map[string]any)
+		if !ok {
+			return "", false
+		}
+		if i > 0 {
+			sb.WriteByte(',')
+		}
+		sb.WriteByte('{')
+
+		// name
+		sb.WriteString(`"name":`)
+		writeJCSString(&sb, jcsStr(fm["name"]))
+
+		// nullable (defaults to false when absent)
+		sb.WriteString(`,"nullable":`)
+		if b, _ := fm["nullable"].(bool); b {
+			sb.WriteString("true")
+		} else {
+			sb.WriteString("false")
+		}
+
+		// semantic — omitted when null/empty
+		if s := jcsStr(fm["semantic"]); s != "" {
+			sb.WriteString(`,"semantic":`)
+			writeJCSString(&sb, s)
+		}
+
+		// type
+		sb.WriteString(`,"type":`)
+		writeJCSString(&sb, jcsStr(fm["type"]))
+
+		sb.WriteByte('}')
+	}
+	sb.WriteString("]}")
+	return sb.String(), true
+}
+
+func jcsStr(v any) string {
+	if s, ok := v.(string); ok {
+		return s
+	}
+	return ""
+}
+
+// writeJCSString appends a JSON string literal with RFC 8259 escaping and WITHOUT
+// Go's default HTML escaping of <, >, & (which encoding/json applies). This matches
+// System.Text.Json used by the .NET reference.
+func writeJCSString(sb *strings.Builder, s string) {
+	b, _ := json.Marshal(s)
+	sb.WriteString(unescapeHTML(string(b)))
+}
+
+// unescapeHTML reverses encoding/json's HTML escaping of <, >, & so the canonical
+// form matches the reference SDK. Safe because these are the only three sequences
+// json escapes beyond the mandatory JSON escapes.
+func unescapeHTML(s string) string {
+	r := strings.NewReplacer(`<`, "<", `>`, ">", `&`, "&")
+	return r.Replace(s)
 }
 
 // Set stores schema with ttlSecs TTL. Returns ErrAnchorPoison if the anchor ID is

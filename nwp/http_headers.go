@@ -12,6 +12,7 @@ const (
 	HeaderIdent        = "X-NWP-Ident"
 	HeaderCapabilities = "X-NWP-Capabilities"
 	HeaderDepth        = "X-NWP-Depth"
+	HeaderTrace        = "X-NWP-Trace"
 	HeaderEncoding     = "X-NWP-Encoding"
 	HeaderTokenizer    = "X-NWP-Tokenizer"
 
